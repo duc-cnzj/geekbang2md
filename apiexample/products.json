@@ -1,0 +1,273 @@
+{
+  "code": 0,
+  "data": {
+    "has_expiring_product": false,
+    "learn_count": { "total": 23 },
+    "list": [
+      {
+        "pid": 100020801,
+        "ptype": "c1",
+        "aid": 68633,
+        "ctime": 1575218677590,
+        "score": 2,
+        "is_expire": false,
+        "expire_time": 0,
+        "last_learned_time": 0
+      }
+    ],
+    "articles": [],
+    "products": [
+      {
+        "id": 100020801,
+        "spu": 208,
+        "ctime": 1541727960,
+        "utime": 1645151404,
+        "begin_time": 1541692800,
+        "end_time": 1551283200,
+        "price": {
+          "market": 19900,
+          "sale": 19900,
+          "sale_type": 1,
+          "start_time": 0,
+          "end_time": 0
+        },
+        "is_onborad": true,
+        "is_sale": false,
+        "is_groupbuy": false,
+        "is_promo": false,
+        "is_shareget": false,
+        "is_sharesale": true,
+        "type": "c1",
+        "is_column": true,
+        "is_core": true,
+        "is_video": false,
+        "is_audio": true,
+        "is_dailylesson": false,
+        "is_university": false,
+        "is_opencourse": false,
+        "is_qconp": false,
+        "nav_id": 1,
+        "time_not_sale": 0,
+        "title": "MySQL实战45讲",
+        "subtitle": "从原理到实战，丁奇带你搞懂MySQL",
+        "intro": "MySQL 使用和面试中遇到的问题，很多人会通过搜索别人的经验来解决 ，零散不成体系。实际上只要理解了 MySQL 的底层工作原理，就能很快地直戳问题的本质。\n本专栏一共 45 讲，全集更新完毕，通过探讨 MySQL 实战中最常见的 36 个 痛点问题，串起各个零散的知识点，配合  100+ 手绘详解图，由线到面带你构建 MySQL 系统的学习路径。\n在专栏中，丁奇结合自己十多年来，通过 MySQL 源码找答案的经历，梳理了 MySQL 的主线知识，比如事务、索引、锁等；并基于这条主线，带你缕清概念、机制、原理、案例分析以及本质，让你真正能掌握 MySQL 核心技术与底层原理。\n值得一提的是，每篇文章中都附有实践案例，给你从理论到实战的系统性指导，让你少走弯路，彻底搞懂 MySQL。\n本课程共包括两大模块。\n模块一，基础篇。为你深入浅出地讲述 MySQL 核心知识，涵盖 MySQL 基础架构、日志系统、事务隔离、锁等内容。\n模块二，实践篇。将从一个个关键的数据库问题出发，分析数据库原理，并给出实践指导。每个问题，都不只是简单地给出答案，而是从为什么要这么想、到底该怎样做出发，让你能够知其所以然，都将能够解决你平时工作中的一个疑惑点。\n",
+        "intro_html": "\u003cp\u003eMySQL 使用和面试中遇到的问题，很多人会通过搜索别人的经验来解决 ，零散不成体系。实际上只要理解了 MySQL 的底层工作原理，就能很快地直戳问题的本质。\u003c/p\u003e\n\u003cp\u003e本专栏一共 \u003cstrong\u003e45\u003c/strong\u003e 讲，\u003cstrong\u003e全集\u003c/strong\u003e更新完毕，通过探讨 MySQL 实战中最常见的 \u003cstrong\u003e36 个\u003c/strong\u003e 痛点问题，串起各个零散的知识点，配合  \u003cstrong\u003e100+\u003c/strong\u003e 手绘详解图，由线到面带你构建 MySQL 系统的学习路径。\u003c/p\u003e\n\u003cp\u003e在专栏中，丁奇结合自己十多年来，通过 MySQL 源码找答案的经历，梳理了 \u003cstrong\u003eMySQL 的主线知识\u003c/strong\u003e，比如\u003cstrong\u003e事务、索引、锁\u003c/strong\u003e等；并基于这条主线，带你缕清\u003cstrong\u003e概念、机制、原理、案例分析\u003c/strong\u003e以及本质，让你真正能掌握 \u003cstrong\u003eMySQL 核心技术与底层原理。\u003c/strong\u003e\u003c/p\u003e\n\u003cp\u003e值得一提的是，每篇文章中都附有\u003cstrong\u003e实践案例\u003c/strong\u003e，给你从理论到实战的系统性指导，让你少走弯路，彻底搞懂 MySQL。\u003c/p\u003e\n\u003cp\u003e本课程共包括两大模块。\u003c/p\u003e\n\u003cp\u003e\u003cstrong\u003e模块一，基础篇\u003c/strong\u003e。为你深入浅出地讲述 MySQL 核心知识，涵盖 MySQL 基础架构、日志系统、事务隔离、锁等内容。\u003c/p\u003e\n\u003cp\u003e\u003cstrong\u003e模块二，实践篇\u003c/strong\u003e。将从一个个关键的数据库问题出发，分析数据库原理，并给出实践指导。每个问题，都不只是简单地给出答案，而是从为什么要这么想、到底该怎样做出发，让你能够知其所以然，都将能够解决你平时工作中的一个疑惑点。\u003c/p\u003e\n",
+        "ucode": "",
+        "is_finish": true,
+        "author": {
+          "name": "林晓斌",
+          "intro": "网名丁奇，腾讯云数据库负责人",
+          "info": "",
+          "avatar": "https://static001.geekbang.org/resource/image/59/db/598593a4da4fd7ea898711cc623292db.jpg",
+          "brief_html": "\u003cp\u003e林晓斌，网名\u003cstrong\u003e“丁奇”，腾讯云数据库负责人，前阿里 P9 技术专家\u003c/strong\u003e，曾负责阿里云 RDS 内核开发团队和运维团队，并推动了 AliSQL 分支开源。作为活跃的 MySQL 社区贡献者，丁奇专注于数据存储系统、MySQL 源码研究和改进、MySQL 性能优化和功能改进，热衷于解决 MySQL 疑难问题。\u003c/p\u003e\n",
+          "brief": "林晓斌，网名“丁奇”，腾讯云数据库负责人，前阿里 P9 技术专家，曾负责阿里云 RDS 内核开发团队和运维团队，并推动了 AliSQL 分支开源。作为活跃的 MySQL 社区贡献者，丁奇专注于数据存储系统、MySQL 源码研究和改进、MySQL 性能优化和功能改进，热衷于解决 MySQL 疑难问题。\n"
+        },
+        "cover": {
+          "square": "https://static001.geekbang.org/resource/image/59/db/598593a4da4fd7ea898711cc623292db.jpg",
+          "rectangle": "https://static001.geekbang.org/resource/image/92/9a/921b5f43c8b3ebf74ee69e5749ae659a.png",
+          "horizontal": "https://static001.geekbang.org/resource/image/9b/25/9b33b159566f26d1548c91b8f70e9a25.jpg",
+          "lecture_horizontal": "https://static001.geekbang.org/resource/image/21/f9/216273057ccf3aac8399e7f5d63897f9.jpg",
+          "learn_horizontal": "https://static001.geekbang.org/resource/image/52/9c/52846990bb3d0f02c094302a3cdfa19c.png",
+          "transparent": "https://static001.geekbang.org/resource/image/c4/fe/c484a5eae415894fd3ce3517d3adc3fe.png",
+          "color": "#b9c1c4"
+        },
+        "article": {
+          "id": 0,
+          "count": 49,
+          "count_req": 47,
+          "count_pub": 49,
+          "total_length": 44297,
+          "first_article_id": 0,
+          "first_article_title": ""
+        },
+        "seo": { "keywords": ["MySQL", "数据库"] },
+        "share": {
+          "title": "丁奇 · MySQL实战45讲",
+          "content": "作者是腾讯云数据库负责人丁奇，他会带你梳理出学习 MySQL 的主线知识，比如事务、索引、锁等，还会就开发过程中经常遇到的具体问题和你分析讨论，并且帮你理解问题背后的本质。",
+          "cover": "https://static001.geekbang.org/resource/image/59/db/598593a4da4fd7ea898711cc623292db.jpg",
+          "poster": "https://static001.geekbang.org/resource/image/be/88/beff98556ac339ddc14b97609cea9288.jpg"
+        },
+        "labels": [69, 9, 3, 13, 6, 78],
+        "unit": "49讲",
+        "column_type": 1,
+        "column": {
+          "unit": "49讲",
+          "bgcolor": "f6f7f9",
+          "update_frequency": "全集",
+          "is_preorder": false,
+          "is_finish": true,
+          "is_include_preview": true,
+          "show_chapter": true,
+          "is_sale_product": true,
+          "study_service": [1, 2, 3, 5, 6, 8, 9, 11],
+          "path": {
+            "desc": "你将获得：\n\n腾讯云数据库负责人独家经验分享；\nMySQL 核心技术详解与原理说明；\n36 个 MySQL 常见痛点问题解析；\n完整的 MySQL 学习路径。\n\n",
+            "desc_html": "\u003cp\u003e\u003cstrong\u003e你将获得\u003c/strong\u003e：\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e腾讯云数据库负责人独家经验分享；\u003c/li\u003e\n\u003cli\u003eMySQL 核心技术详解与原理说明；\u003c/li\u003e\n\u003cli\u003e36 个 MySQL 常见痛点问题解析；\u003c/li\u003e\n\u003cli\u003e完整的 MySQL 学习路径。\u003c/li\u003e\n\u003c/ul\u003e\n"
+          },
+          "is_camp": false,
+          "catalog_pic_url": "https://static001.geekbang.org/resource/image/b7/c2/b736f37014d28199c2457a67ed669bc2.jpg",
+          "recommend_articles": [69236, 70562, 75173, 75659, 79026, 82231],
+          "recommend_comments": [281607, 146234],
+          "ranks": null,
+          "hot_comments": null,
+          "hot_lines": null,
+          "display_type": 3,
+          "intro_bg_style": 4,
+          "comment_top_ads": "",
+          "article_float_qrcode_url": "https://static001.geekbang.org/resource/image/83/1c/83e244537b714e899fd2e7896e22371c.png",
+          "article_float_app_qrcode_url": "",
+          "article_float_qrcode_jump": "https://time.geekbang.org/serv/v4/misc/jump?uri=https%3A%2F%2Ftime.geekbang.org%2Fhybrid%2Fmp%2Fjump%3Furl%3Dhttps%253A%252F%252Fstatic001.geekbang.org%252Fresource%252Fimage%252Fee%252Fb2%252Feedd4090668aabfac91b2b445d27cbb2.png",
+          "in_rank": false
+        },
+        "dl": {
+          "article": {
+            "id": 0,
+            "video_duration": "",
+            "video_hot": 0,
+            "could_preview": false
+          },
+          "topic_ids": []
+        },
+        "university": {
+          "total_hour": 0,
+          "term": 0,
+          "redirect_type": "",
+          "redirect_param": "",
+          "wx_qrcode": "",
+          "wx_rule": "",
+          "server_start_time": 0,
+          "lecturer_h_cover": ""
+        },
+        "opencourse": {
+          "video_bg": "",
+          "ad": {
+            "cover": "",
+            "cover_web": "",
+            "redirect_type": "",
+            "redirect_param": ""
+          },
+          "article_fav": { "aid": 0, "had_done": false, "count": 0 },
+          "author_h_cover": ""
+        },
+        "qconp": {
+          "topic_id": 0,
+          "cover_appoint": "",
+          "article": {
+            "id": 0,
+            "cover": "",
+            "video_duration": "",
+            "video_hot": 0
+          }
+        },
+        "fav_qrcode": "",
+        "extra": {
+          "sub": {
+            "count": 0,
+            "had_done": false,
+            "could_order": false,
+            "access_mask": 0
+          },
+          "fav": { "count": 0, "had_done": false },
+          "rate": {
+            "article_count": 32,
+            "article_count_req": 32,
+            "is_finished": false,
+            "rate_percent": 68,
+            "video_seconds": 0,
+            "last_article_id": 68633,
+            "last_chapter_id": 0,
+            "has_learn": false
+          },
+          "cert": { "id": "", "type": 0 },
+          "nps": {
+            "min": 24,
+            "status": 0,
+            "url": "https://jinshuju.net/f/Aaa9IQ"
+          },
+          "any_read": { "total": 4, "count": 0 },
+          "university": {
+            "status": 0,
+            "view_status": 0,
+            "charge_status": 0,
+            "share_renewal_status": 0,
+            "unlocked_status": 0,
+            "unlocked_chapter_ids": [],
+            "unlocked_chapter_id": 0,
+            "unlocked_chapter_title": "",
+            "unlocked_article_count": 0,
+            "unlocked_next_time": 0,
+            "expire_time": 0,
+            "is_expired": false,
+            "is_graduated": false,
+            "had_sub": false,
+            "timeline": [],
+            "has_wx_friend": false,
+            "sub_term_title": ""
+          },
+          "vip": { "is_year_card": false, "show": false, "end_time": 0 },
+          "appoint": { "could_do": false, "had_done": false, "count": 0 },
+          "group_buy": {
+            "success_ucount": 0,
+            "join_code": "",
+            "could_groupbuy": false,
+            "had_join": false,
+            "price": 0,
+            "list": []
+          },
+          "sharesale": {
+            "original_pic_color": "595656",
+            "original_pic_url": "https://static001.geekbang.org/render/screen/e4/59/e4080986b0844cb946c286ceefd4ab59.png",
+            "promo_pic_color": "514E47",
+            "promo_pic_url": "https://static001.geekbang.org/render/screen/e4/59/e4080986b0844cb946c286ceefd4ab59.png",
+            "share_sale_price": 2400,
+            "share_sale_guest_price": 0
+          },
+          "promo": { "ent_time": 0 },
+          "channel": { "is": false, "back_amount": 0 },
+          "first_promo": { "price": 0, "could_join": false },
+          "coupon_promo": { "could_join": false, "price": 0 },
+          "helper": [],
+          "tab": { "comment": false },
+          "modules": [
+            {
+              "name": "gain",
+              "title": "",
+              "content": "\n腾讯云数据库负责人独家经验分享；\nMySQL 核心技术详解与原理说明；\n36 个 MySQL 常见痛点问题解析；\n完整的 MySQL 学习路径。\n\n",
+              "type": "",
+              "is_top": false
+            }
+          ],
+          "cid": 0,
+          "first_aids": [],
+          "study_plan": {
+            "id": 0,
+            "day_nums": 0,
+            "article_nums": 0,
+            "learned_week_nums": 0,
+            "status": 0
+          },
+          "cate_id": 303,
+          "cate_name": "",
+          "group_tag": { "is_recommend": false, "is_recently_learn": false },
+          "first_award": {
+            "show": false,
+            "talks": 0,
+            "reads": 0,
+            "amount": 0,
+            "expire_time": 0,
+            "redirect_type": "",
+            "redirect_param": ""
+          }
+        },
+        "available_coupons": [2632],
+        "in_pvip": 0
+      }
+    ],
+    "page": { "more": true, "count": 0, "score": 0, "score0": 0 }
+  },
+  "error": {},
+  "extra": {
+    "cost": 0.093400614,
+    "request-id": "580e3fcfa216474abd79715dfa03c60b@2@time"
+  }
+}

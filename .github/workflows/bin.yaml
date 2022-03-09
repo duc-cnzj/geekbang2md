@@ -1,0 +1,76 @@
+name: CI
+on:
+  push:
+    tags:
+      - "v*"
+jobs:
+  build-darwin:
+    name: Build Go Binary macos amd64
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17'
+      - run: |
+          make build_drawin_amd64
+          make build_drawin_arm64
+      - name: upload geekbang2md
+        uses: actions/upload-artifact@v2
+        with:
+          name: geekbang2md-macos
+          path: |
+            geekbang2md-darwin-amd64
+            geekbang2md-darwin-arm64
+  build-windows:
+    name: Build Go Binary windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17'
+      - run: |
+          make build_windows
+      - name: upload geekbang2md
+        uses: actions/upload-artifact@v2
+        with:
+          name: geekbang2md-windows
+          path: |
+            geekbang2md-windows.exe
+
+  release:
+    needs: [build-darwin, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download darwin geekbang2md
+        uses: actions/download-artifact@v2
+        with:
+          name: geekbang2md-macos
+          path: /tmp
+      - name: Download windows geekbang2md
+        uses: actions/download-artifact@v2
+        with:
+          name: geekbang2md-windows
+          path: /tmp
+      - uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true
+          allowUpdates: true
+          artifacts: "/tmp/geekbang2md*"
+          token: ${{ secrets.GITHUB_TOKEN }}
