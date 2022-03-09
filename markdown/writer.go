@@ -27,7 +27,9 @@ func NewMDWriter(baseDir, title string, imgM *image.Manager) *MDWriter {
 }
 
 func (w *MDWriter) GetFileName(filename string) string {
-	filename = strings.ReplaceAll(filename, "/", `-`)
+	for c, r := range replaceCharacters {
+		filename = strings.ReplaceAll(filename, c, r)
+	}
 	name := filepath.Join(w.baseDir, filename)
 	if strings.HasSuffix(name, ".md") {
 		return name

@@ -35,7 +35,7 @@ type client struct {
 }
 
 func newClient() *client {
-	return &client{c: &http.Client{}, rt: waiter.NewWaiter(rate.Every(5*time.Second), 30), headers: map[string]string{}}
+	return &client{c: &http.Client{}, rt: waiter.NewWaiter(rate.Every(5*time.Second), 10), headers: map[string]string{}}
 }
 
 func (c *client) SetPhone(phone string) {
