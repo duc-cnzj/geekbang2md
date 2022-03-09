@@ -37,11 +37,11 @@ func (w *MDWriter) GetFileName(filename string) string {
 
 func (w *MDWriter) FileExists(filename string) bool {
 	st, err := os.Stat(w.GetFileName(filename))
+	if err == nil && st.Size() > 0 {
+		return true
+	}
 	if os.IsNotExist(err) {
 		return false
-	}
-	if st.Size() > 0 {
-		return true
 	}
 	return false
 }
