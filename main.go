@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -14,8 +13,8 @@ import (
 	"time"
 
 	"github.com/DuC-cnZj/geekbang2md/api"
+	"github.com/DuC-cnZj/geekbang2md/read_password"
 	"github.com/DuC-cnZj/geekbang2md/zhuanlan"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 var (
@@ -50,8 +49,7 @@ func main() {
 				if phone == "" || password == "" {
 					fmt.Printf("用户名: ")
 					fmt.Scanln(&phone)
-					bytes, _ := readPassword("密码: ")
-					password = string(bytes)
+					password = read_password.ReadPassword("密码: ")
 					api.HttpClient.SetPassword(password)
 					api.HttpClient.SetPhone(phone)
 				}
@@ -123,23 +121,4 @@ func main() {
 
 	<-done
 	log.Println("ByeBye")
-}
-
-func readPassword(prompt string) ([]byte, error) {
-	fmt.Fprint(os.Stderr, prompt)
-	var fd int
-	if terminal.IsTerminal(syscall.Stdin) {
-		fd = syscall.Stdin
-	} else {
-		tty, err := os.Open("/dev/tty")
-		if err != nil {
-			return nil, errors.New("error allocating terminal")
-		}
-		defer tty.Close()
-		fd = int(tty.Fd())
-	}
-
-	pass, err := terminal.ReadPassword(fd)
-	fmt.Fprintln(os.Stderr)
-	return pass, err
 }
