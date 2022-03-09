@@ -51,6 +51,7 @@ func (w *Waiter) Wait(ctx context.Context) {
 		for w.count != 0 {
 			log.Println("wait")
 			w.cond.Wait()
+			w.rt.Wait(ctx)
 		}
 	}()
 }
