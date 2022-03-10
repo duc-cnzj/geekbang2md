@@ -99,7 +99,7 @@ func main() {
 		for {
 			courses = nil
 			courseID = ""
-			fmt.Printf("选择你要爬取的课程(多个用 , 隔开), 直接回车默认全部: \n")
+			fmt.Printf("🍎 下载的目录是: '%s', 选择你要爬取的课程(多个用 , 隔开), 直接回车默认全部: \n", dir)
 			fmt.Printf("> ")
 			fmt.Scanln(&courseID)
 			if courseID == "" {
@@ -117,7 +117,6 @@ func main() {
 			}
 			break
 		}
-		log.Printf("🍎 下载的目录是: '%s'\n", dir)
 		log.Println("############ 爬取的课程 ############")
 		for _, cours := range courses {
 			log.Printf(cours.Title)
