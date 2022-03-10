@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/dustin/go-humanize"
+
 	"github.com/DuC-cnZj/geekbang2md/image"
 	md "github.com/JohannesKaufmann/html-to-markdown"
 )
@@ -109,7 +111,7 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 		mdAudio = ""
 	}
 	ss.Set(mdheader + mdAudio + ss.Get())
-	log.Printf("[WRITE]: %s -> %s, length: %d\n", w.title, filepath.Base(w.GetFileName(title)), len(ss.Get()))
+	log.Printf("[WRITE]: %s -> %s (大小: %s)\n", w.title, filepath.Base(w.GetFileName(title)), humanize.Bytes(uint64(len(ss.Get()))))
 	if _, err := file.Write([]byte(ss.Get())); err != nil {
 		return err
 	}
