@@ -78,7 +78,8 @@ func (zl *ZhuanLan) Download() error {
 		wg.Add(1)
 		go func(s *api.ArticlesResponseItem, i int) {
 			defer wg.Done()
-			if zl.mdWriter.FileExists(s.ArticleTitle) {
+			t := getTitle(s, i, pad)
+			if zl.mdWriter.FileExists(t) {
 				//log.Println("[SKIP]: ", s.ArticleTitle)
 				return
 			}
@@ -92,7 +93,7 @@ func (zl *ZhuanLan) Download() error {
 				if zl.noaudio {
 					s.AudioDownloadURL = ""
 				}
-				if err := zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, getTitle(s, i, pad), response.Data.ArticleContent); err != nil {
+				if err := zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, t, response.Data.ArticleContent); err != nil {
 					log.Println(err)
 				}
 			}
