@@ -62,20 +62,24 @@ func main() {
 					api.HttpClient.SetPassword(password)
 					api.HttpClient.SetPhone(phone)
 				}
-				if err = api.HttpClient.Login(phone, password, 0); err != nil {
+				if u, err := api.HttpClient.Login(phone, password); err != nil {
 					log.Fatalln(err)
+				} else {
+					log.Printf("############ %s ############", u.Data.Nick)
 				}
-				log.Println("login success")
 			} else {
 				api.HttpClient.SetHeaders(map[string]string{"Cookie": cookie})
+				ti, err := api.HttpClient.Time()
+				if err != nil {
+					log.Fatalln(err)
+				}
+				if u, err := api.HttpClient.UserAuth(ti.Data * 1000); err == nil {
+					log.Printf("############ %s ############", u.Data.Nick)
+				} else {
+					log.Fatalln(err)
+				}
+
 			}
-			auth, err := api.HttpClient.UserAuth()
-			if err != nil {
-				log.Println(err)
-				time.Sleep(10 * time.Second)
-				continue
-			}
-			log.Printf("############ %s ############", auth.Data.Nick)
 			products, err = api.Products(100)
 			if err != nil {
 				time.Sleep(10 * time.Second)

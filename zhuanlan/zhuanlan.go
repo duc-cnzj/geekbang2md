@@ -107,7 +107,7 @@ func (zl *ZhuanLan) Download() error {
 	return nil
 }
 
-var regexpTitle = regexp.MustCompile(`^\s*(\d+)\s*`)
+var regexpTitle = regexp.MustCompile(`^(\s*(\d+)\s*|第\d+讲\s)`)
 
 func getTitle(s *api.ArticlesResponseItem, i int, pad int) string {
 	title := regexpTitle.ReplaceAllString(s.ArticleTitle, "")

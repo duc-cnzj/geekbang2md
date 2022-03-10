@@ -39,11 +39,12 @@ func (w *Waiter) Restart() {
 	defer w.mu.Unlock()
 	w.count--
 	w.cond.Broadcast()
-	log.Println("[Restart the world]!")
+	log.Println("[Restart the world]!: ", w.count)
 }
 
 func (w *Waiter) Wait(ctx context.Context) {
 	w.rt.Wait(ctx)
+	var rewait bool
 
 	func() {
 		w.mu.Lock()
@@ -51,7 +52,10 @@ func (w *Waiter) Wait(ctx context.Context) {
 		for w.count != 0 {
 			log.Println("wait")
 			w.cond.Wait()
-			w.rt.Wait(ctx)
+			rewait = true
 		}
 	}()
+	if rewait {
+		w.rt.Wait(ctx)
+	}
 }

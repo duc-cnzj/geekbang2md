@@ -45,11 +45,16 @@ func (c *client) SetPassword(pwd string) {
 	c.password = pwd
 }
 
-func (c *client) Get(url string) (resp *http.Response, err error) {
+func (c *client) Get(url string, direct bool) (resp *http.Response, err error) {
 	r, _ := http.NewRequest("GET", url, nil)
 	c.addHeaders(r)
 
-	do, err := c.Do(r)
+	var do *http.Response
+	if direct {
+		do, err = c.c.Do(r)
+	} else {
+		do, err = c.Do(r)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +130,7 @@ func (c *client) Post(url string, data interface{}, direct bool) (resp *http.Res
 
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	c.rt.Wait(context.TODO())
+	//log.Println("called: ", req.URL)
 	var res *http.Response
 	var err error
 	//log.Printf("call: %s", req.URL)
@@ -133,25 +139,13 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	//if err = backoff.Retry(func() error {
-	//	if err != nil {
-	//		log.Println(err)
-	//		return err
-	//	}
-	//	if res.StatusCode == 451 {
-	//		c.Login()
-	//		return errors.New("geekbang 451")
-	//	}
-	//	return nil
-	//}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second*10), 20)); err != nil {
-	//	return nil, err
-	//}
-
 	return res, err
 }
 
-func (c *client) Login(cellphone, password string, duration time.Duration) error {
-	_, err, shared := sf.Do("login", func() (interface{}, error) {
+func (c *client) Login(cellphone, password string) (*AuthInfo, error) {
+	c.SetCookies(nil)
+	u, err, shared := sf.Do("login", func() (interface{}, error) {
+		var user *AuthInfo
 		post, err := c.Post("https://account.geekbang.org/account/ticket/login", map[string]interface{}{
 			"country":   86,
 			"cellphone": cellphone,
@@ -170,13 +164,52 @@ func (c *client) Login(cellphone, password string, duration time.Duration) error
 			return nil, err
 		}
 		c.SetCookies(post.Cookies())
-		time.Sleep(duration)
-		return nil, nil
+		ti, err := c.Time()
+		if err != nil {
+			return nil, err
+		}
+		if user, err = c.UserAuth(ti.Data * 1000); err != nil {
+			return nil, err
+		}
+		log.Println("重新登录成功")
+		return user, nil
 	})
 	if shared {
 		log.Println("login request shared.")
 	}
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return u.(*AuthInfo), nil
+}
+func (c *client) Token(token string) error {
+	res, err := c.Post("https://account.infoq.cn/account/ticket/token", map[string]interface{}{
+		"token": token,
+	}, true)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	c.SetCookies(res.Cookies())
+	return nil
+}
+
+type TimeResponse struct {
+	Data int `json:"data"`
+	Code int `json:"code"`
+}
+
+func (c *client) Time() (*TimeResponse, error) {
+	var r *TimeResponse
+	res, err := c.Get("https://time.geekbang.org/serv/v1/time", true)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, err
+	}
+	c.SetCookies(res.Cookies())
+	return r, nil
 }
 
 type AuthInfo struct {
@@ -199,8 +232,8 @@ type AuthInfo struct {
 	Code int `json:"code"`
 }
 
-func (c *client) UserAuth() (*AuthInfo, error) {
-	res, err := c.Get("https://account.geekbang.org/serv/v1/user/auth?t=" + strconv.Itoa(int(time.Now().UnixMilli())))
+func (c *client) UserAuth(t int) (*AuthInfo, error) {
+	res, err := c.Get("https://account.geekbang.org/serv/v1/user/auth?t="+strconv.Itoa(t), true)
 	if err != nil {
 		return nil, err
 	}
@@ -210,14 +243,14 @@ func (c *client) UserAuth() (*AuthInfo, error) {
 	if info.Code != 0 {
 		return nil, errors.New(fmt.Sprintf("%v %d", info.Error, info.Code))
 	}
-	//c.SetCookies(res.Cookies())
+	c.SetCookies(res.Cookies())
 	return info, nil
 }
 
 func (c *client) SetCookies(cookies []*http.Cookie) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.cookies = cookies
+	c.cookies = append(c.cookies, cookies...)
 }
 
 func (c *client) SetHeaders(m map[string]string) {
@@ -265,8 +298,8 @@ func (c *client) handleError(do *http.Response, direct bool) (*http.Response, er
 		if !direct {
 			c.rt.Stw()
 			time.Sleep(20 * time.Second)
-			if err := c.Login(c.phone, c.password, time.Second*5); err != nil {
-				log.Println("login: ", err)
+			if _, err := c.Login(c.phone, c.password); err != nil {
+				log.Fatalln("login err: ", err)
 			}
 			c.rt.Restart()
 		}
