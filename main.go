@@ -14,14 +14,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/DuC-cnZj/geekbang2md/cache"
+	"github.com/dustin/go-humanize"
 
 	"github.com/DuC-cnZj/geekbang2md/api"
+	"github.com/DuC-cnZj/geekbang2md/cache"
+	"github.com/DuC-cnZj/geekbang2md/constant"
 	"github.com/DuC-cnZj/geekbang2md/read_password"
 	"github.com/DuC-cnZj/geekbang2md/zhuanlan"
 )
 
 var (
+	dir     string
 	cookie  string
 	noaudio bool
 )
@@ -29,10 +32,13 @@ var (
 func init() {
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
 	flag.BoolVar(&noaudio, "noaudio", false, "-noaudio 不下载音频")
+	flag.StringVar(&dir, "dir", constant.TempDir, fmt.Sprintf("-dir /tmp 下载目录, 默认使用临时目录: '%s'", constant.TempDir))
 }
 
 func main() {
 	flag.Parse()
+	dir = filepath.Join(dir, "geekbang")
+
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	done := make(chan struct{}, 1)
@@ -111,6 +117,7 @@ func main() {
 			}
 			break
 		}
+		log.Printf("🍎 下载的目录是: '%s'\n", dir)
 		log.Println("############ 爬取的课程 ############")
 		for _, cours := range courses {
 			log.Printf(cours.Title)
@@ -122,6 +129,9 @@ func main() {
 			m[s.Pid] = s.Aid
 		}
 		defer func(t time.Time) { log.Printf("🍌 一共耗时: %s\n", time.Since(t)) }(time.Now())
+		cache.Init(dir)
+		zhuanlan.Init(dir)
+
 		wg := sync.WaitGroup{}
 		for i := range courses {
 			wg.Add(1)
@@ -144,17 +154,23 @@ func main() {
 		}
 
 		wg.Wait()
-		var current, _ = os.Getwd()
 		var count int
-		filepath.Walk(filepath.Join(current, "geekbang"), func(path string, info fs.FileInfo, err error) error {
+		var totalSize int64
+		filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 			count++
-			if info.Mode().IsRegular() && info.Size() < 10 {
-				log.Printf("%s 文件为空\n", path)
+			if info.Mode().IsRegular() {
+				if info.Size() < 10 {
+					log.Printf("%s 文件为空\n", path)
+				}
+				totalSize += info.Size()
 			}
 			return nil
 		})
 		log.Printf("共计 %d 个文件\n", count)
-		log.Println(fmt.Sprintf("缓存位于 %s 目录，可以随意删除", cache.Dir()))
+		if err := os.RemoveAll(cache.Dir()); err != nil {
+			log.Printf("删除缓存目录失败, 请手动删除: %v\n", err)
+		}
+		log.Printf("🍓 markdown 目录位于: %s, 大小是 %s\n", dir, humanize.Bytes(uint64(totalSize)))
 		log.Println("🥭 END")
 		done <- struct{}{}
 	}()

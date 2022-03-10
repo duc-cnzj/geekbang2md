@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -32,12 +31,16 @@ type ZhuanLan struct {
 	mdWriter     *markdown.MDWriter
 }
 
-var current, _ = os.Getwd()
+var baseDir string
+var imageManager *image.Manager
 
-var imageManager = image.NewManager(filepath.Join(current, "geekbang", "images"))
+func Init(d string) {
+	baseDir = d
+	imageManager = image.NewManager(filepath.Join(baseDir, "images"))
+}
 
 func NewZhuanLan(title string, id, aid int, author string, count int, keywords []string, noaudio bool) *ZhuanLan {
-	mdWriter := markdown.NewMDWriter(filepath.Join(current, "geekbang", title), title, imageManager)
+	mdWriter := markdown.NewMDWriter(filepath.Join(baseDir, title), title, imageManager)
 	return &ZhuanLan{noaudio: noaudio, title: title, id: id, aid: aid, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
 }
 

@@ -9,16 +9,15 @@ import (
 
 type Cache struct{}
 
-var getwd, _ = os.Getwd()
-var cacheDirName = "geekbang-cache-data"
-var cacheDir = filepath.Join(getwd, cacheDirName)
+var dir string
 
-func init() {
-	os.MkdirAll(cacheDir, 0755)
+func Init(baseDir string) {
+	dir = filepath.Join(baseDir, ".cache")
+	os.MkdirAll(dir, 0755)
 }
 
 func Dir() string {
-	return cacheDir
+	return dir
 }
 
 func (c *Cache) Get(key string) ([]byte, error) {
@@ -44,5 +43,5 @@ func (c *Cache) Set(key string, data interface{}) error {
 }
 
 func (c *Cache) cachePath(key string) string {
-	return fmt.Sprintf(filepath.Join(cacheDirName, "cache-%v.json"), key)
+	return fmt.Sprintf(filepath.Join(dir, "cache-%v.json"), key)
 }
