@@ -327,18 +327,18 @@ type ApiProjectResponse struct {
 	} `json:"extra"`
 }
 
-func Products() (ApiProjectResponse, error) {
+func Products(size int) (ApiProjectResponse, error) {
 	var result ApiProjectResponse
+	//var key = fmt.Sprintf("products-%d", size)
+	//file, err := c.Get(key)
+	//if err == nil && len(file) > 0 {
+	//	err = json.NewDecoder(bytes.NewReader(file)).Decode(&result)
+	//	if err == nil {
+	//		return result, err
+	//	}
+	//}
 
-	file, err := c.Get("products")
-	if err == nil && len(file) > 0 {
-		err = json.NewDecoder(bytes.NewReader(file)).Decode(&result)
-		if err == nil {
-			return result, err
-		}
-	}
-
-	res, err := HttpClient.Post("https://time.geekbang.org/serv/v3/learn/product", `{"desc":true,"expire":1,"last_learn":0,"learn_status":0,"prev":0,"size":100,"sort":1,"type":"c1","with_learn_count":1}`, false)
+	res, err := HttpClient.Post("https://time.geekbang.org/serv/v3/learn/product", fmt.Sprintf(`{"desc":true,"expire":1,"last_learn":0,"learn_status":0,"prev":0,"size":%d,"sort":1,"type":"c1","with_learn_count":1}`, size), false)
 	if err != nil {
 		return ApiProjectResponse{}, err
 	}
@@ -350,9 +350,9 @@ func Products() (ApiProjectResponse, error) {
 	if err != nil {
 		return ApiProjectResponse{}, err
 	}
-	if res.StatusCode < 400 {
-		c.Set("products", result)
-	}
+	//if res.StatusCode < 400 {
+	//	c.Set(key, result)
+	//}
 
 	return result, nil
 }

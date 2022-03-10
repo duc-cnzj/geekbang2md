@@ -2,10 +2,12 @@ package zhuanlan
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -67,10 +69,14 @@ func (zl *ZhuanLan) Download() error {
 	if err != nil {
 		log.Println(err)
 	}
+	var pad int = 2
+	if zl.count > 100 {
+		pad = 3
+	}
 	wg := sync.WaitGroup{}
 	for i := range articles.Data.List {
 		wg.Add(1)
-		go func(s *api.ArticlesResponseItem) {
+		go func(s *api.ArticlesResponseItem, i int) {
 			defer wg.Done()
 			if zl.mdWriter.FileExists(s.ArticleTitle) {
 				//log.Println("[SKIP]: ", s.ArticleTitle)
@@ -86,13 +92,20 @@ func (zl *ZhuanLan) Download() error {
 				if zl.noaudio {
 					s.AudioDownloadURL = ""
 				}
-				if err := zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, s.ArticleTitle, response.Data.ArticleContent); err != nil {
+				if err := zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, getTitle(s, i, pad), response.Data.ArticleContent); err != nil {
 					log.Println(err)
 				}
 			}
-		}(articles.Data.List[i])
+		}(articles.Data.List[i], i)
 	}
 
 	wg.Wait()
 	return nil
+}
+
+var regexpTitle = regexp.MustCompile(`^\s*(\d+)\s*`)
+
+func getTitle(s *api.ArticlesResponseItem, i int, pad int) string {
+	title := regexpTitle.ReplaceAllString(s.ArticleTitle, "")
+	return fmt.Sprintf("%0*d %s", pad, i+1, title)
 }

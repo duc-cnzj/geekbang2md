@@ -59,8 +59,8 @@ func (w *MDWriter) WriteReadmeMD(content string) error {
 	return nil
 }
 
-func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime, filename string, html string) error {
-	file, err := os.OpenFile(w.GetFileName(filename), os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
+func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime, title string, html string) error {
+	file, err := os.OpenFile(w.GetFileName(title), os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 	mdheader := fmt.Sprintf(`
 # %s
 
-`, w.title)
+`, title)
 	mdAudio := fmt.Sprintf(`
 <span style="font-size: 12px">讲述：%s </span>&nbsp;&nbsp;<span style="font-size: 12px">大小：%s </span>&nbsp;&nbsp;<span style="font-size: 12px">时长：%s</span>
 
@@ -109,7 +109,7 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 		mdAudio = ""
 	}
 	ss.Set(mdheader + mdAudio + ss.Get())
-	log.Printf("[WRITE]: %s -> %s, length: %d\n", w.title, filepath.Base(w.GetFileName(filename)), len(ss.Get()))
+	log.Printf("[WRITE]: %s -> %s, length: %d\n", w.title, filepath.Base(w.GetFileName(title)), len(ss.Get()))
 	if _, err := file.Write([]byte(ss.Get())); err != nil {
 		return err
 	}

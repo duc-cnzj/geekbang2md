@@ -8,9 +8,13 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/DuC-cnZj/geekbang2md/cache"
 
 	"github.com/DuC-cnZj/geekbang2md/api"
 	"github.com/DuC-cnZj/geekbang2md/read_password"
@@ -23,7 +27,6 @@ var (
 )
 
 func init() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
 	flag.BoolVar(&noaudio, "noaudio", false, "-noaudio 不下载音频")
 }
@@ -67,7 +70,7 @@ func main() {
 				continue
 			}
 			log.Printf("############ %s ############", auth.Data.Nick)
-			products, err = api.Products()
+			products, err = api.Products(100)
 			if err != nil {
 				time.Sleep(10 * time.Second)
 				continue
@@ -78,16 +81,52 @@ func main() {
 				break
 			}
 		}
+		for index, product := range products.Data.Products {
+			log.Printf("[%d] %s ---%s\n", index+1, product.Title, product.Author.Name)
+		}
+
+		var (
+			courseID string
+			courses  []api.Product
+		)
+	ASK:
+		for {
+			courses = nil
+			courseID = ""
+			fmt.Printf("选择你要爬取的课程(多个用 , 隔开), 直接回车默认全部: \n")
+			fmt.Printf("> ")
+			fmt.Scanln(&courseID)
+			if courseID == "" {
+				courses = products.Data.Products
+				break
+			}
+			split := strings.Split(courseID, ",")
+			for _, s := range split {
+				id, err := strconv.Atoi(s)
+				if err != nil || id > len(products.Data.Products) || id < 1 {
+					log.Printf("非法课程 id %v !\n", s)
+					continue ASK
+				}
+				courses = append(courses, products.Data.Products[id-1])
+			}
+			break
+		}
+		log.Println("############ 爬取的课程 ############")
+		for _, cours := range courses {
+			log.Printf(cours.Title)
+		}
+		log.Println("############")
+
 		m := map[int]int{}
 		for _, s := range products.Data.List {
 			m[s.Pid] = s.Aid
 		}
+		defer func(t time.Time) { log.Printf("🍌 一共耗时: %s\n", time.Since(t)) }(time.Now())
 		wg := sync.WaitGroup{}
-		for i := range products.Data.Products {
+		for i := range courses {
 			wg.Add(1)
 			go func(product *api.Product) {
 				defer wg.Done()
-				log.Printf("%s ---%s\n", product.Title, product.Author.Name)
 				var aid = m[product.ID]
 				if aid == 0 && len(product.Column.RecommendArticles) > 0 {
 					aid = product.Column.RecommendArticles[0]
@@ -101,7 +140,7 @@ func main() {
 					product.Seo.Keywords,
 					noaudio,
 				).Download()
-			}(&products.Data.Products[i])
+			}(&courses[i])
 		}
 
 		wg.Wait()
@@ -115,6 +154,7 @@ func main() {
 			return nil
 		})
 		log.Printf("共计 %d 个文件\n", count)
+		log.Println(fmt.Sprintf("缓存位于 %s 目录，可以随意删除", cache.Dir()))
 		log.Println("🥭 END")
 		done <- struct{}{}
 	}()

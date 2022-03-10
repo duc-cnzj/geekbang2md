@@ -270,7 +270,7 @@ func (c *client) handleError(do *http.Response, direct bool) (*http.Response, er
 			}
 			c.rt.Restart()
 		}
-		return nil, errors.New("geekbang 451: 请求太频繁了，再等等吧")
+		return nil, errors.New("geekbang 451: 请求太频繁了，再等等吧，程序虽然能继续运行，但还是建议你过会儿再抓")
 	}
 	if do.StatusCode > 400 {
 		defer do.Body.Close()
