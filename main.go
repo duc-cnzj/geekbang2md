@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -121,11 +122,6 @@ func main() {
 			}
 			break
 		}
-		log.Println("############ 爬取的课程 ############")
-		for _, cours := range courses {
-			log.Printf(cours.Title)
-		}
-		log.Println("############")
 
 		m := map[int]int{}
 		for _, s := range products.Data.List {
@@ -141,9 +137,11 @@ func main() {
 			go func(product *api.Product) {
 				defer wg.Done()
 				var aid = m[product.ID]
-				if aid == 0 && len(product.Column.RecommendArticles) > 0 {
+				if len(product.Column.RecommendArticles) > 0 {
+					sort.Ints(product.Column.RecommendArticles)
 					aid = product.Column.RecommendArticles[0]
 				}
+				log.Printf("开始爬取: [%s]\n", product.Title)
 				zhuanlan.NewZhuanLan(
 					product.Title,
 					product.ID,
@@ -159,12 +157,13 @@ func main() {
 		wg.Wait()
 		var count int
 		var totalSize int64
-		if err := os.RemoveAll(cache.Dir()); err != nil {
-			log.Printf("删除缓存目录失败, 请手动删除: '%s', err: '%v'\n", cache.Dir(), err)
-		}
+		var cacheSize int64
 		filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 			count++
 			if info.Mode().IsRegular() {
+				if strings.HasPrefix(path, cache.Dir()) {
+					cacheSize += info.Size()
+				}
 				if info.Size() < 10 {
 					log.Printf("%s 文件为空\n", path)
 				}
@@ -174,6 +173,7 @@ func main() {
 		})
 		log.Printf("共计 %d 个文件\n", count)
 		log.Printf("🍓 markdown 目录位于: %s, 大小是 %s\n", dir, humanize.Bytes(uint64(totalSize)))
+		log.Printf("缓存目录, 请手动删除: %s, 大小是 %s\n", cache.Dir(), humanize.Bytes(uint64(cacheSize)))
 		log.Println("🥭 END")
 		done <- struct{}{}
 	}()

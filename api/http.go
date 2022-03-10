@@ -171,7 +171,7 @@ func (c *client) Login(cellphone, password string) (*AuthInfo, error) {
 		if user, err = c.UserAuth(ti.Data * 1000); err != nil {
 			return nil, err
 		}
-		log.Println("重新登录成功")
+		log.Println("登录成功")
 		return user, nil
 	})
 	if shared {
