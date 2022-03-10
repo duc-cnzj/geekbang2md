@@ -260,7 +260,7 @@ func (c *client) addHeaders(r *http.Request) {
 }
 
 func (c *client) handleError(do *http.Response, direct bool) (*http.Response, error) {
-	if do.StatusCode == 451 {
+	if do.StatusCode == 451 || do.StatusCode == 452 {
 		defer do.Body.Close()
 		if !direct {
 			c.rt.Stw()
