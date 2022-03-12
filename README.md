@@ -1,6 +1,8 @@
-# 极客时间专栏爬虫
+# 极客时间 专栏 + 视频 爬虫
 
-> 如有侵权，联系我，马上删库
+> 仅供学习交流，请勿商用
+> 
+> 随便写写，能用就行
 
 因为该死的速率限制，爬虫比较慢，大概 5s/次 请求，不会被限流
 
@@ -24,3 +26,11 @@ go install github.com/DuC-cnZj/geekbang2md
 ```shell
 ./geekbang2md -h
 ```
+
+TODO
+
+1. 优化
+
+## 参考
+
+[geek_crawler](https://github.com/zhengxiaotian/geek_crawler)

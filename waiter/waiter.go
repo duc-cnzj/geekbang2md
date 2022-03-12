@@ -8,6 +8,14 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type Interface interface {
+	Wait(context.Context)
+	Release()
+
+	Stw()
+	Restart()
+}
+
 type Waiter struct {
 	count int
 	mu    *sync.Mutex
@@ -25,6 +33,8 @@ func NewWaiter(r rate.Limit, b int) *Waiter {
 		rt:   rate.NewLimiter(r, b),
 	}
 }
+
+func (w *Waiter) Release() {}
 
 func (w *Waiter) Stw() {
 	w.mu.Lock()

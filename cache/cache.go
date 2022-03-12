@@ -42,6 +42,16 @@ func (c *Cache) Set(key string, data interface{}) error {
 	return nil
 }
 
+func (c *Cache) SetOrigin(key string, data []byte) error {
+	if len(data) > 0 {
+		if err := os.WriteFile(c.cachePath(key), data, 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *Cache) cachePath(key string) string {
 	return fmt.Sprintf(filepath.Join(dir, "cache-%v.json"), key)
 }

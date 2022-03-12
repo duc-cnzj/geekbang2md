@@ -6,11 +6,26 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 
 	"github.com/DuC-cnZj/geekbang2md/cache"
 )
 
 var c = &cache.Cache{}
+
+type ProductList []Product
+
+func (p ProductList) Len() int {
+	return len(p)
+}
+
+func (p ProductList) Less(i, j int) bool {
+	return p[i].Type == ProductTypeZhuanlan
+}
+
+func (p ProductList) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
 
 type Product struct {
 	ID        int `json:"id"`
@@ -310,7 +325,7 @@ type Data struct {
 		LastLearnedTime int    `json:"last_learned_time"`
 	} `json:"list"`
 	Articles []interface{} `json:"articles"`
-	Products []Product     `json:"products"`
+	Products ProductList   `json:"products"`
 	Page     struct {
 		More   bool `json:"more"`
 		Count  int  `json:"count"`
@@ -327,7 +342,15 @@ type ApiProjectResponse struct {
 	} `json:"extra"`
 }
 
-func Products(size int) (ApiProjectResponse, error) {
+type PType = string
+
+const (
+	ProductTypeZhuanlan PType = "c1"
+	ProductTypeVideo    PType = "c3"
+	ProductTypeAll      PType = ""
+)
+
+func Products(size int, t PType) (ApiProjectResponse, error) {
 	var result ApiProjectResponse
 	//var key = fmt.Sprintf("products-%d", size)
 	//file, err := c.Get(key)
@@ -338,7 +361,7 @@ func Products(size int) (ApiProjectResponse, error) {
 	//	}
 	//}
 
-	res, err := HttpClient.Post("https://time.geekbang.org/serv/v3/learn/product", fmt.Sprintf(`{"desc":true,"expire":1,"last_learn":0,"learn_status":0,"prev":0,"size":%d,"sort":1,"type":"c1","with_learn_count":1}`, size), false)
+	res, err := HttpClient.Post("https://time.geekbang.org/serv/v3/learn/product", fmt.Sprintf(`{"desc":true,"expire":1,"last_learn":0,"learn_status":0,"prev":0,"size":%d,"sort":1,"type":"%s","with_learn_count":1}`, size, t), false)
 	if err != nil {
 		return ApiProjectResponse{}, err
 	}
@@ -355,6 +378,21 @@ func Products(size int) (ApiProjectResponse, error) {
 	//}
 
 	return result, nil
+}
+
+type Video struct {
+	Sd struct {
+		URL  string `json:"url"`
+		Size int    `json:"size"`
+	} `json:"sd"`
+	Hd struct {
+		URL  string `json:"url"`
+		Size int    `json:"size"`
+	} `json:"hd"`
+	Ld struct {
+		URL  string `json:"url"`
+		Size int    `json:"size"`
+	} `json:"ld"`
 }
 
 type ArticleResponse struct {
@@ -463,12 +501,12 @@ type ArticleResponse struct {
 			FileName    string `json:"file_name"`
 			DownloadURL string `json:"download_url"`
 		} `json:"offline"`
-		ArticleCouldPreview bool          `json:"article_could_preview"`
-		HlsVideos           []interface{} `json:"hls_videos"`
-		InPvip              int           `json:"in_pvip"`
-		AudioDownloadURL    string        `json:"audio_download_url"`
-		ArticleCtime        int           `json:"article_ctime"`
-		ArticleSharetitle   string        `json:"article_sharetitle"`
+		ArticleCouldPreview bool        `json:"article_could_preview"`
+		HlsVideos           interface{} `json:"hls_videos"`
+		InPvip              int         `json:"in_pvip"`
+		AudioDownloadURL    string      `json:"audio_download_url"`
+		ArticleCtime        int         `json:"article_ctime"`
+		ArticleSharetitle   string      `json:"article_sharetitle"`
 	} `json:"data"`
 	Code int `json:"code"`
 }
@@ -613,4 +651,25 @@ func Articles(cid int) (ArticlesResponse, error) {
 		c.Set(fmt.Sprintf("articles-%d", cid), result)
 	}
 	return result, nil
+}
+
+func VideoKey(u string, vid string) ([]byte, error) {
+	cacheKey := "keyurl-" + vid
+	file, err := c.Get(cacheKey)
+	if err == nil {
+		return file, nil
+	}
+	request, _ := http.NewRequest("GET", u, nil)
+	request.Header.Set("origin", "https://time.geekbang.org")
+
+	get, err := (&http.Client{}).Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer get.Body.Close()
+	all, _ := io.ReadAll(get.Body)
+	if len(all) > 0 {
+		c.SetOrigin(cacheKey, all)
+	}
+	return all, nil
 }

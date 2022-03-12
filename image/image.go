@@ -9,17 +9,16 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
+	"github.com/DuC-cnZj/geekbang2md/constant"
 	"github.com/DuC-cnZj/geekbang2md/waiter"
-	"golang.org/x/time/rate"
 )
 
 type Manager struct {
 	sync.RWMutex
 	images  map[string]string
 	baseDir string
-	waiter  *waiter.Waiter
+	waiter  waiter.Interface
 }
 
 func NewManager(baseDir string) *Manager {
@@ -29,7 +28,7 @@ func NewManager(baseDir string) *Manager {
 		RWMutex: sync.RWMutex{},
 		images:  map[string]string{},
 		baseDir: baseDir,
-		waiter:  waiter.NewWaiter(rate.Every(100*time.Millisecond), 30),
+		waiter:  waiter.NewSigWaiter(constant.ImageDownloadParallel),
 	}
 }
 
@@ -52,6 +51,7 @@ func (m *Manager) Download(u string) (string, error) {
 		return p, nil
 	}
 	m.waiter.Wait(context.TODO())
+	defer m.waiter.Release()
 	c := &http.Client{}
 	res, err := c.Get(u)
 	if err != nil {
@@ -82,6 +82,7 @@ func (m *Manager) Get(url string) string {
 	}
 	return path
 }
+
 func (m *Manager) Add(url, path string) {
 	m.Lock()
 	defer m.Unlock()

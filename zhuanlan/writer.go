@@ -1,4 +1,4 @@
-package markdown
+package zhuanlan
 
 import (
 	"fmt"
@@ -55,6 +55,7 @@ func (w *MDWriter) WriteReadmeMD(content string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	if _, err := file.Write([]byte(content)); err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package markdown
+package zhuanlan
 
 var replaceCharacters = map[string]string{
 	`/`: "-",

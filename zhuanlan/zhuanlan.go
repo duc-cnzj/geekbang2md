@@ -15,7 +15,6 @@ import (
 
 	"github.com/DuC-cnZj/geekbang2md/api"
 	"github.com/DuC-cnZj/geekbang2md/image"
-	"github.com/DuC-cnZj/geekbang2md/markdown"
 )
 
 type ZhuanLan struct {
@@ -25,10 +24,9 @@ type ZhuanLan struct {
 	author   string
 	count    int
 	keywords []string
-	aid      int
 
 	imageManager *image.Manager
-	mdWriter     *markdown.MDWriter
+	mdWriter     *MDWriter
 }
 
 var baseDir string
@@ -39,9 +37,9 @@ func Init(d string) {
 	imageManager = image.NewManager(filepath.Join(baseDir, "images"))
 }
 
-func NewZhuanLan(title string, id, aid int, author string, count int, keywords []string, noaudio bool) *ZhuanLan {
-	mdWriter := markdown.NewMDWriter(filepath.Join(baseDir, title), title, imageManager)
-	return &ZhuanLan{noaudio: noaudio, title: title, id: id, aid: aid, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
+func NewZhuanLan(title string, id int, author string, count int, keywords []string, noaudio bool) *ZhuanLan {
+	mdWriter := NewMDWriter(filepath.Join(baseDir, title), title, imageManager)
+	return &ZhuanLan{noaudio: noaudio, title: title, id: id, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
 }
 
 var rd, _ = template.New("").Parse(`
@@ -63,12 +61,7 @@ func (zl *ZhuanLan) Download() error {
 		"Keywords": strings.Join(zl.keywords, ", "),
 	})
 	zl.mdWriter.WriteReadmeMD(bf.String())
-	article, err := api.Article(strconv.Itoa(zl.aid))
-	if err != nil {
-		log.Println(err, zl.aid)
-		return err
-	}
-	articles, err := api.Articles(article.Data.Cid)
+	articles, err := api.Articles(zl.id)
 	if err != nil {
 		log.Println(err)
 	}

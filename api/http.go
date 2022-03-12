@@ -15,12 +15,13 @@ import (
 	"sync"
 	"time"
 
-	sf2 "github.com/DuC-cnZj/geekbang2md/sf"
+	"github.com/DuC-cnZj/geekbang2md/constant"
+	"github.com/DuC-cnZj/geekbang2md/utils"
+
 	"github.com/DuC-cnZj/geekbang2md/waiter"
-	"golang.org/x/time/rate"
 )
 
-var sf sf2.Group
+var sf utils.Group
 
 var HttpClient = newClient()
 
@@ -30,12 +31,12 @@ type client struct {
 	headers map[string]string
 
 	c               *http.Client
-	rt              *waiter.Waiter
+	rt              waiter.Interface
 	phone, password string
 }
 
 func newClient() *client {
-	return &client{c: &http.Client{}, rt: waiter.NewWaiter(rate.Every(5*time.Second), 10), headers: map[string]string{}}
+	return &client{c: &http.Client{}, rt: waiter.NewWaiter(constant.RequestLimit, constant.BucketSize), headers: map[string]string{}}
 }
 
 func (c *client) SetPhone(phone string) {
@@ -130,6 +131,7 @@ func (c *client) Post(url string, data interface{}, direct bool) (resp *http.Res
 
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	c.rt.Wait(context.TODO())
+	defer c.rt.Release()
 	//log.Println("called: ", req.URL)
 	var res *http.Response
 	var err error
