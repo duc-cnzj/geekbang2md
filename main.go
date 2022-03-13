@@ -15,14 +15,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/DuC-cnZj/geekbang2md/video"
-
 	"github.com/dustin/go-humanize"
 
 	"github.com/DuC-cnZj/geekbang2md/api"
 	"github.com/DuC-cnZj/geekbang2md/cache"
 	"github.com/DuC-cnZj/geekbang2md/constant"
-	"github.com/DuC-cnZj/geekbang2md/read_password"
+	"github.com/DuC-cnZj/geekbang2md/utils"
+	"github.com/DuC-cnZj/geekbang2md/video"
 	"github.com/DuC-cnZj/geekbang2md/zhuanlan"
 )
 
@@ -66,7 +65,7 @@ func main() {
 			if phone == "" || password == "" {
 				fmt.Printf("用户名: ")
 				fmt.Scanln(&phone)
-				password = read_password.ReadPassword("密码: ")
+				password = utils.ReadPassword("密码: ")
 				api.HttpClient.SetPassword(password)
 				api.HttpClient.SetPhone(phone)
 			}
@@ -77,7 +76,7 @@ func main() {
 			}
 		}
 
-		var products api.ApiProjectResponse
+		var products api.ProjectResponse
 		products, err = api.Products(100, api.ProductTypeAll)
 		if err != nil {
 			log.Fatalln("获取课程失败", err)
@@ -150,7 +149,7 @@ func main() {
 	log.Println("ByeBye")
 }
 
-func prompt(products api.ApiProjectResponse) []api.Product {
+func prompt(products api.ProjectResponse) []api.Product {
 	sort.Sort(products.Data.Products)
 	for index, product := range products.Data.Products {
 		var ptypename string

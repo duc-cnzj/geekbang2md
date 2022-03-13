@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/DuC-cnZj/geekbang2md/utils"
+
 	"github.com/dustin/go-humanize"
 
 	"github.com/DuC-cnZj/geekbang2md/api"
@@ -54,7 +56,7 @@ func NewVideo(title string, id int, author string, count int, keywords []string)
 	return &Video{
 		title:    title,
 		baseDir:  d,
-		waiter:   waiter.NewSigWaiter(constant.VideoDownloadParallel),
+		waiter:   waiter.NewSigWaiter(constant.VideoDownloadParallelNum),
 		cid:      id,
 		author:   author,
 		count:    count,
@@ -85,7 +87,7 @@ func (s Segs) Swap(i, j int) {
 }
 
 func (v *Video) DownloadPath(name string) string {
-	return filepath.Join(v.baseDir, name)
+	return utils.FilterCharacters(filepath.Join(v.baseDir, name))
 }
 
 func (v *Video) DeleteSegs(segs []*Seg) error {
@@ -99,6 +101,7 @@ func (v *Video) Download() error {
 	articles, err := api.Articles(v.cid)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	wg := sync.WaitGroup{}

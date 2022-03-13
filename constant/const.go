@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	// VideoDownloadParallel 视频并发下载数量
-	VideoDownloadParallel int64 = 5
-	// ImageDownloadParallel 图片并发下载数量
-	ImageDownloadParallel int64 = 30
+	// VideoDownloadParallelNum 视频并发下载数量
+	VideoDownloadParallelNum int64 = 5
+	// ImageDownloadParallelNum 图片并发下载数量
+	ImageDownloadParallelNum int64 = 30
 
 	// RequestLimit http 请求速率
 	RequestLimit = rate.Every(5 * time.Second)

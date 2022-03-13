@@ -45,11 +45,11 @@ func NewZhuanLan(title string, id int, author string, count int, keywords []stri
 var rd, _ = template.New("").Parse(`
 # {{ .Title }}
 
-> author: {{ .Author }}
+> 作者: {{ .Author }}
 >
-> count: {{ .Count }}
+> 总数: {{ .Count }}
 
-keywords: {{ .Keywords }}。
+关键字: {{ .Keywords }}。
 `)
 
 func (zl *ZhuanLan) Download() error {
@@ -64,6 +64,7 @@ func (zl *ZhuanLan) Download() error {
 	articles, err := api.Articles(zl.id)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 	var pad int = 2
 	if zl.count > 100 {

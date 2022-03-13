@@ -28,7 +28,7 @@ func NewManager(baseDir string) *Manager {
 		RWMutex: sync.RWMutex{},
 		images:  map[string]string{},
 		baseDir: baseDir,
-		waiter:  waiter.NewSigWaiter(constant.ImageDownloadParallel),
+		waiter:  waiter.NewSigWaiter(constant.ImageDownloadParallelNum),
 	}
 }
 

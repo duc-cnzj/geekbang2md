@@ -13,20 +13,6 @@ import (
 
 var c = &cache.Cache{}
 
-type ProductList []Product
-
-func (p ProductList) Len() int {
-	return len(p)
-}
-
-func (p ProductList) Less(i, j int) bool {
-	return p[i].Type == ProductTypeZhuanlan
-}
-
-func (p ProductList) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
 type Product struct {
 	ID        int `json:"id"`
 	Spu       int `json:"spu"`
@@ -309,7 +295,22 @@ type Product struct {
 	AvailableCoupons []int `json:"available_coupons"`
 	InPvip           int   `json:"in_pvip"`
 }
-type Data struct {
+
+type ProductList []Product
+
+func (p ProductList) Len() int {
+	return len(p)
+}
+
+func (p ProductList) Less(i, j int) bool {
+	return p[i].Type == ProductTypeZhuanlan
+}
+
+func (p ProductList) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+type ProjectResponseData struct {
 	HasExpiringProduct bool `json:"has_expiring_product"`
 	LearnCount         struct {
 		Total int `json:"total"`
@@ -333,9 +334,9 @@ type Data struct {
 		Score0 int  `json:"score0"`
 	} `json:"page"`
 }
-type ApiProjectResponse struct {
-	Code  int   `json:"code"`
-	Data  *Data `json:"data"`
+type ProjectResponse struct {
+	Code  int                  `json:"code"`
+	Data  *ProjectResponseData `json:"data"`
 	Extra struct {
 		Cost      float64 `json:"cost"`
 		RequestID string  `json:"request-id"`
@@ -350,8 +351,8 @@ const (
 	ProductTypeAll      PType = ""
 )
 
-func Products(size int, t PType) (ApiProjectResponse, error) {
-	var result ApiProjectResponse
+func Products(size int, t PType) (ProjectResponse, error) {
+	var result ProjectResponse
 	//var key = fmt.Sprintf("products-%d", size)
 	//file, err := c.Get(key)
 	//if err == nil && len(file) > 0 {
@@ -363,7 +364,7 @@ func Products(size int, t PType) (ApiProjectResponse, error) {
 
 	res, err := HttpClient.Post("https://time.geekbang.org/serv/v3/learn/product", fmt.Sprintf(`{"desc":true,"expire":1,"last_learn":0,"learn_status":0,"prev":0,"size":%d,"sort":1,"type":"%s","with_learn_count":1}`, size, t), false)
 	if err != nil {
-		return ApiProjectResponse{}, err
+		return ProjectResponse{}, err
 	}
 	defer func() {
 		io.Copy(io.Discard, res.Body)
@@ -371,7 +372,7 @@ func Products(size int, t PType) (ApiProjectResponse, error) {
 	}()
 	err = json.NewDecoder(res.Body).Decode(&result)
 	if err != nil {
-		return ApiProjectResponse{}, err
+		return ProjectResponse{}, err
 	}
 	//if res.StatusCode < 400 {
 	//	c.Set(key, result)

@@ -1,4 +1,4 @@
-package read_password
+package utils
 
 import (
 	"fmt"

@@ -27,10 +27,7 @@ go install github.com/DuC-cnZj/geekbang2md
 ./geekbang2md -h
 ```
 
-TODO
-
-1. 优化
-
 ## 参考
 
-[geek_crawler](https://github.com/zhengxiaotian/geek_crawler)
+- [geek_crawler](https://github.com/zhengxiaotian/geek_crawler)
+- [Python提取極客時間-阿里雲HLS加密視頻解密過程分析](https://pcnow.cc/p/Y6Vlnccea7.html)

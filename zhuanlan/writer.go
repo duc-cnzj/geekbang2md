@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/DuC-cnZj/geekbang2md/utils"
+
 	"github.com/dustin/go-humanize"
 
 	"github.com/DuC-cnZj/geekbang2md/image"
@@ -29,9 +31,7 @@ func NewMDWriter(baseDir, title string, imgM *image.Manager) *MDWriter {
 }
 
 func (w *MDWriter) GetFileName(filename string) string {
-	for c, r := range replaceCharacters {
-		filename = strings.ReplaceAll(filename, c, r)
-	}
+	filename = utils.FilterCharacters(filename)
 	name := filepath.Join(w.baseDir, filename)
 	if strings.HasSuffix(name, ".md") {
 		return name
