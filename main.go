@@ -26,9 +26,10 @@ import (
 )
 
 var (
-	dir     string
-	cookie  string
-	noaudio bool
+	dir          string
+	cookie       string
+	noaudio      bool
+	downloadType string
 )
 
 func init() {
@@ -36,10 +37,13 @@ func init() {
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
 	flag.BoolVar(&noaudio, "noaudio", false, "-noaudio 不下载音频")
 	flag.StringVar(&dir, "dir", constant.TempDir, fmt.Sprintf("-dir /tmp 下载目录, 默认使用临时目录: '%s'", constant.TempDir))
+	flag.StringVar(&downloadType, "type", "", "-type zhuanlan/video 下载类型，不指定则默认全部类型")
 }
 
 func main() {
 	flag.Parse()
+	validateType()
+
 	dir = filepath.Join(dir, "geekbang")
 	cache.Init(dir)
 	zhuanlan.Init(dir)
@@ -77,7 +81,16 @@ func main() {
 		}
 
 		var products api.ProjectResponse
-		products, err = api.Products(100, api.ProductTypeAll)
+		ptype := api.ProductTypeAll
+
+		switch downloadType {
+		case "zhuanlan":
+			ptype = api.ProductTypeZhuanlan
+		case "video":
+			ptype = api.ProductTypeVideo
+		}
+
+		products, err = api.Products(100, ptype)
 		if err != nil {
 			log.Fatalln("获取课程失败", err)
 		}
@@ -147,6 +160,12 @@ func main() {
 
 	<-done
 	log.Println("ByeBye")
+}
+
+func validateType() {
+	if downloadType != "" && downloadType != "zhuanlan" && downloadType != "video" {
+		log.Fatalf("type 参数校验失败, '%s' \n", downloadType)
+	}
 }
 
 func prompt(products api.ProjectResponse) []api.Product {
