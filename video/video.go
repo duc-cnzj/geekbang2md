@@ -87,7 +87,7 @@ func (s Segs) Swap(i, j int) {
 }
 
 func (v *Video) DownloadPath(name string) string {
-	return utils.FilterCharacters(filepath.Join(v.baseDir, name))
+	return filepath.Join(v.baseDir,utils.FilterCharacters(name))
 }
 
 func (v *Video) DeleteSegs(segs []*Seg) error {
