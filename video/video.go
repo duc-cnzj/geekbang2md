@@ -90,6 +90,10 @@ func (v *Video) DownloadPath(name string) string {
 	return filepath.Join(v.baseDir, utils.FilterCharacters(name))
 }
 
+func (v *Video) SegDownloadPath(name string) string {
+	return filepath.Join(v.baseDir, "segs", utils.FilterCharacters(name))
+}
+
 func (v *Video) DeleteSegs(segs []*Seg) error {
 	for _, seg := range segs {
 		os.Remove(seg.path)
@@ -180,7 +184,7 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 		id, _ := strconv.Atoi(s[1])
 		items = append(items, &Seg{
 			id:      id,
-			path:    v.DownloadPath(filepath.Join("segs", s[0])),
+			path:    v.SegDownloadPath(s[0]),
 			fullUrl: baseUrl + s[0],
 		})
 	}
