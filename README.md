@@ -18,7 +18,7 @@ chmod +x geekbang2md
 or
 
 ```shell
-go install github.com/DuC-cnZj/geekbang2md
+go install github.com/DuC-cnZj/geekbang2md@latest
 ```
 
 ## 使用
