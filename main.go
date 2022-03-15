@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
+	log.SetFlags(0)
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
 	flag.BoolVar(&noaudio, "noaudio", false, "-noaudio 不下载音频")
 	flag.StringVar(&dir, "dir", constant.TempDir, fmt.Sprintf("-dir /tmp 下载目录, 默认使用临时目录: '%s'", constant.TempDir))
