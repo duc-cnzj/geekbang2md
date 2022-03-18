@@ -15,10 +15,11 @@ import (
 
 	"github.com/DuC-cnZj/geekbang2md/api"
 	"github.com/DuC-cnZj/geekbang2md/image"
+	"github.com/DuC-cnZj/geekbang2md/utils"
 )
 
 type ZhuanLan struct {
-	noaudio  bool
+	audio    bool
 	title    string
 	id       int
 	author   string
@@ -30,16 +31,17 @@ type ZhuanLan struct {
 }
 
 var baseDir string
-var imageManager *image.Manager
 
 func Init(d string) {
 	baseDir = d
-	imageManager = image.NewManager(filepath.Join(baseDir, "images"))
 }
 
-func NewZhuanLan(title string, id int, author string, count int, keywords []string, noaudio bool) *ZhuanLan {
-	mdWriter := NewMDWriter(filepath.Join(baseDir, title), title, imageManager)
-	return &ZhuanLan{noaudio: noaudio, title: title, id: id, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
+func NewZhuanLan(title string, id int, author string, count int, keywords []string, audio bool) *ZhuanLan {
+	dir := filepath.Join(baseDir, utils.FilterCharacters(title))
+	imageManager := image.NewManager(filepath.Join(dir, "images"))
+
+	mdWriter := NewMDWriter(dir, title, imageManager)
+	return &ZhuanLan{audio: audio, title: title, id: id, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
 }
 
 var rd, _ = template.New("").Parse(`
@@ -70,14 +72,15 @@ func (zl *ZhuanLan) Download() error {
 	if zl.count > 100 {
 		pad = 3
 	}
+
 	wg := sync.WaitGroup{}
 	for i := range articles.Data.List {
 		wg.Add(1)
 		go func(s *api.ArticlesResponseItem, i int) {
 			defer wg.Done()
 			t := getTitle(s, i, pad)
-			if zl.mdWriter.FileExists(t) {
-				//log.Println("[SKIP]: ", s.ArticleTitle)
+			if info, exists := zl.mdWriter.FileExists(t); exists {
+				log.Printf("[SKIP]: %s -> %s (大小: %s)\n", zl.title, filepath.Base(info.Name()), humanize.Bytes(uint64(info.Size())))
 				return
 			}
 			response, err := api.Article(strconv.Itoa(s.ID))
@@ -87,10 +90,10 @@ func (zl *ZhuanLan) Download() error {
 			}
 
 			if len(response.Data.ArticleContent) > 0 {
-				if zl.noaudio {
+				if !zl.audio {
 					s.AudioDownloadURL = ""
 				}
-				if err := zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, t, response.Data.ArticleContent); err != nil {
+				if err = zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, t, response.Data.ArticleContent); err != nil {
 					log.Println(err)
 				}
 			}

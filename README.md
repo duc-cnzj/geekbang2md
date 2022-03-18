@@ -31,3 +31,8 @@ go install github.com/DuC-cnZj/geekbang2md@latest
 
 - [geek_crawler](https://github.com/zhengxiaotian/geek_crawler)
 - [Python提取極客時間-阿里雲HLS加密視頻解密過程分析](https://pcnow.cc/p/Y6Vlnccea7.html)
+
+
+## 疑问
+
+1. 输入账号密码出现验证码错误怎么办？建议使用 `cookie` 登录

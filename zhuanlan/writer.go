@@ -9,12 +9,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/DuC-cnZj/geekbang2md/image"
 	"github.com/DuC-cnZj/geekbang2md/utils"
 
-	"github.com/dustin/go-humanize"
-
-	"github.com/DuC-cnZj/geekbang2md/image"
 	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/dustin/go-humanize"
 )
 
 var imgRegexp = regexp.MustCompile(`!\[(.*?)]\((.*)\)`)
@@ -39,15 +38,15 @@ func (w *MDWriter) GetFileName(filename string) string {
 	return name + ".md"
 }
 
-func (w *MDWriter) FileExists(filename string) bool {
+func (w *MDWriter) FileExists(filename string) (os.FileInfo, bool) {
 	st, err := os.Stat(w.GetFileName(filename))
 	if err == nil && st.Size() > 0 {
-		return true
+		return st, true
 	}
 	if os.IsNotExist(err) {
-		return false
+		return nil, false
 	}
-	return false
+	return nil, false
 }
 
 func (w *MDWriter) WriteReadmeMD(content string) error {
@@ -63,11 +62,6 @@ func (w *MDWriter) WriteReadmeMD(content string) error {
 }
 
 func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime, title string, html string) error {
-	file, err := os.OpenFile(w.GetFileName(title), os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
 	converter := md.NewConverter("", true, nil)
 	markdown, err := converter.ConvertString(html)
 	if err != nil {
@@ -79,11 +73,15 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 	if audioDownloadURL != "" {
 		images = append(images, audioDownloadURL)
 	}
+
 	wg := sync.WaitGroup{}
 	for _, s := range images {
 		wg.Add(1)
 		go func(s string) {
 			defer wg.Done()
+			if s == "" {
+				return
+			}
 			download, err := w.imageManager.Download(s)
 			if err != nil {
 				log.Println(err)
@@ -112,10 +110,15 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 		mdAudio = ""
 	}
 	ss.Set(mdheader + mdAudio + ss.Get())
-	log.Printf("[WRITE]: %s -> %s (大小: %s)\n", w.title, filepath.Base(w.GetFileName(title)), humanize.Bytes(uint64(len(ss.Get()))))
+	file, err := os.OpenFile(w.GetFileName(title), os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 	if _, err := file.Write([]byte(ss.Get())); err != nil {
 		return err
 	}
+	log.Printf("[WRITE]: %s -> %s (大小: %s)\n", w.title, filepath.Base(w.GetFileName(title)), humanize.Bytes(uint64(len(ss.Get()))))
 	return nil
 }
 
