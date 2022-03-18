@@ -23,6 +23,7 @@ import (
 
 	"github.com/DuC-cnZj/geekbang2md/api"
 	"github.com/DuC-cnZj/geekbang2md/bar"
+	"github.com/DuC-cnZj/geekbang2md/constant"
 	"github.com/DuC-cnZj/geekbang2md/utils"
 	"github.com/DuC-cnZj/geekbang2md/waiter"
 )
@@ -182,7 +183,7 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 	}
 
 	wg := sync.WaitGroup{}
-	sigWaiter := waiter.NewSigWaiter(10)
+	sigWaiter := waiter.NewSigWaiter(constant.VideoDownloadParallelNum)
 	b := bar.NewBar(s.ArticleTitle, len(items))
 	for i := range items {
 		wg.Add(1)
