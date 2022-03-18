@@ -300,8 +300,10 @@ func (c *client) handleError(do *http.Response, direct bool) (*http.Response, er
 		if !direct {
 			c.rt.Stw()
 			time.Sleep(20 * time.Second)
-			if _, err := c.Login(c.phone, c.password); err != nil {
-				log.Fatalln("login err: ", err)
+			if c.phone != "" && c.password != "" {
+				if _, err := c.Login(c.phone, c.password); err != nil {
+					log.Fatalln("login err: ", err, c.phone, c.password)
+				}
 			}
 			c.rt.Restart()
 		}

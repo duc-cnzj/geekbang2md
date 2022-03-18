@@ -7,17 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
-
-	"github.com/DuC-cnZj/geekbang2md/utils"
-
-	"github.com/dustin/go-humanize"
-
-	"github.com/DuC-cnZj/geekbang2md/api"
-	"github.com/DuC-cnZj/geekbang2md/constant"
-	"github.com/DuC-cnZj/geekbang2md/waiter"
-
 	"io"
+	"io/fs"
 	"log"
 	"net/url"
 	"os"
@@ -27,12 +18,18 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/dustin/go-humanize"
+
+	"github.com/DuC-cnZj/geekbang2md/api"
+	"github.com/DuC-cnZj/geekbang2md/bar"
+	"github.com/DuC-cnZj/geekbang2md/utils"
+	"github.com/DuC-cnZj/geekbang2md/waiter"
 )
 
 type Video struct {
 	sync.RWMutex
 	baseDir string
-	waiter  waiter.Interface
 
 	cid   int
 	title string
@@ -51,12 +48,11 @@ func Init(d string) {
 var uregex = regexp.MustCompile(`URI="(.*?)"`)
 
 func NewVideo(title string, id int, author string, count int, keywords []string) *Video {
-	d := filepath.Join(baseDir, title)
+	d := filepath.Join(baseDir, utils.FilterCharacters(title))
 	os.MkdirAll(d, 0755)
 	return &Video{
 		title:    title,
 		baseDir:  d,
-		waiter:   waiter.NewSigWaiter(constant.VideoDownloadParallelNum),
 		cid:      id,
 		author:   author,
 		count:    count,
@@ -108,28 +104,24 @@ func (v *Video) Download() error {
 		return err
 	}
 
-	wg := sync.WaitGroup{}
 	for i := range articles.Data.List {
-		wg.Add(1)
-		go func(s *api.ArticlesResponseItem) {
-			defer wg.Done()
-			v.waiter.Wait(context.TODO())
-			defer v.waiter.Release()
+		func() {
+			s := articles.Data.List[i]
 			article, err := api.Article(strconv.Itoa(s.ID))
 			if err != nil {
+				log.Printf("[Download]: article: %s err: %v \n", s.ArticleTitle, err)
 				return
 			}
 			marshal, _ := json.Marshal(article.Data.HlsVideos)
 			var vi api.Video
 			json.Unmarshal(marshal, &vi)
-			log.Printf("开始下载: %s", s.ArticleTitle)
+			//log.Printf("开始下载: %s", s.ArticleTitle)
 			err = download(v.DownloadPath(s.ArticleTitle+".ts"), vi.Hd.URL, v, s)
 			if err != nil {
 				log.Printf("下载出错: %v\n", err)
 			}
-		}(articles.Data.List[i])
+		}()
 	}
-	wg.Wait()
 	p := v.DownloadPath("segs")
 	var count int
 	filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
@@ -190,11 +182,13 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 	}
 
 	wg := sync.WaitGroup{}
-	sigWaiter := waiter.NewSigWaiter(5)
+	sigWaiter := waiter.NewSigWaiter(50)
+	b := bar.NewBar(s.ArticleTitle, len(items))
 	for i := range items {
 		wg.Add(1)
 		go func(s *Seg) {
 			defer wg.Done()
+			defer b.Add()
 			sigWaiter.Wait(context.TODO())
 			defer sigWaiter.Release()
 			st, err := os.Stat(s.path)
@@ -248,7 +242,7 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 	}
 	v.DeleteSegs(items)
 	info, _ := f.Stat()
-	log.Printf("[SUCCESS]: 下载成功 '%s', 大小: '%s'", s.ArticleTitle, humanize.Bytes(uint64(info.Size())))
+	log.Printf("\n[SUCCESS]: 下载成功 '%s', 大小: '%s'", s.ArticleTitle, humanize.Bytes(uint64(info.Size())))
 	return nil
 }
 
@@ -259,8 +253,11 @@ const (
 func decryptAES128(crypted, key, iv []byte) (origData []byte, err error) {
 	defer func() {
 		e := recover()
-		if e != nil {
-			err = errors.New(e.(string))
+		switch edata := e.(type) {
+		case string:
+			err = errors.New(edata)
+		case error:
+			err = edata
 		}
 	}()
 	block, err := aes.NewCipher(key)

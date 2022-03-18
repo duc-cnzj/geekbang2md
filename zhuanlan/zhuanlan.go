@@ -15,6 +15,7 @@ import (
 
 	"github.com/DuC-cnZj/geekbang2md/api"
 	"github.com/DuC-cnZj/geekbang2md/image"
+	"github.com/DuC-cnZj/geekbang2md/utils"
 )
 
 type ZhuanLan struct {
@@ -38,7 +39,7 @@ func Init(d string) {
 }
 
 func NewZhuanLan(title string, id int, author string, count int, keywords []string, noaudio bool) *ZhuanLan {
-	mdWriter := NewMDWriter(filepath.Join(baseDir, title), title, imageManager)
+	mdWriter := NewMDWriter(filepath.Join(baseDir, utils.FilterCharacters(title)), title, imageManager)
 	return &ZhuanLan{noaudio: noaudio, title: title, id: id, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
 }
 
@@ -70,6 +71,7 @@ func (zl *ZhuanLan) Download() error {
 	if zl.count > 100 {
 		pad = 3
 	}
+
 	wg := sync.WaitGroup{}
 	for i := range articles.Data.List {
 		wg.Add(1)
@@ -90,7 +92,7 @@ func (zl *ZhuanLan) Download() error {
 				if zl.noaudio {
 					s.AudioDownloadURL = ""
 				}
-				if err := zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, t, response.Data.ArticleContent); err != nil {
+				if err = zl.mdWriter.WriteFile(s.AudioDownloadURL, s.AudioDubber, humanize.Bytes(uint64(s.AudioSize)), s.AudioTime, t, response.Data.ArticleContent); err != nil {
 					log.Println(err)
 				}
 			}

@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -30,12 +29,14 @@ var (
 	cookie       string
 	noaudio      bool
 	downloadType string
+	hack         bool
 )
 
 func init() {
 	log.SetFlags(0)
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
-	flag.BoolVar(&noaudio, "noaudio", false, "-noaudio 不下载音频")
+	flag.BoolVar(&hack, "hack", false, "-hack 获取全部视频，不管你有没有")
+	flag.BoolVar(&noaudio, "noaudio", true, "-noaudio 不下载音频")
 	flag.StringVar(&dir, "dir", constant.TempDir, fmt.Sprintf("-dir /tmp 下载目录, 默认使用临时目录: '%s'", constant.TempDir))
 	flag.StringVar(&downloadType, "type", "", "-type zhuanlan/video 下载类型，不指定则默认全部类型")
 }
@@ -79,8 +80,7 @@ func main() {
 				log.Printf("############ %s ############", u.Data.Nick)
 			}
 		}
-
-		var products api.ProjectResponse
+		var products api.ProductList
 		ptype := api.ProductTypeAll
 
 		switch downloadType {
@@ -90,49 +90,47 @@ func main() {
 			ptype = api.ProductTypeVideo
 		}
 
-		products, err = api.Products(100, ptype)
+		if hack {
+			products, err = all(ptype)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		} else {
+			products, err = api.AllProducts(ptype)
+		}
 		if err != nil {
 			log.Fatalln("获取课程失败", err)
 		}
-		if products.Code == -1 {
-			log.Fatalln("再等等吧, 不让抓了")
-		}
 		courses := prompt(products)
-
 		defer func(t time.Time) { log.Printf("🍌 一共耗时: %s\n", time.Since(t)) }(time.Now())
 
-		wg := sync.WaitGroup{}
 		for i := range courses {
-			wg.Add(1)
-			go func(product *api.Product) {
-				defer wg.Done()
-				log.Printf("开始爬取: <%s>\n", product.Title)
+			var product = &courses[i]
+			log.Printf("开始爬取: <%s>\n", product.Title)
 
-				switch product.Type {
-				case api.ProductTypeVideo:
-					video.NewVideo(
-						product.Title,
-						product.ID,
-						product.Author.Name,
-						product.Article.Count,
-						product.Seo.Keywords,
-					).Download()
-				case api.ProductTypeZhuanlan:
-					zhuanlan.NewZhuanLan(
-						product.Title,
-						product.ID,
-						product.Author.Name,
-						product.Article.Count,
-						product.Seo.Keywords,
-						noaudio,
-					).Download()
-				default:
-					log.Printf("未知类型, %s\n", product.Type)
-				}
-			}(&courses[i])
+			switch product.Type {
+			case api.ProductTypeVideo:
+				video.NewVideo(
+					product.Title,
+					product.ID,
+					product.Author.Name,
+					product.Article.Count,
+					product.Seo.Keywords,
+				).Download()
+			case api.ProductTypeZhuanlan:
+				zhuanlan.NewZhuanLan(
+					product.Title,
+					product.ID,
+					product.Author.Name,
+					product.Article.Count,
+					product.Seo.Keywords,
+					noaudio,
+				).Download()
+			default:
+				log.Printf("未知类型, %s\n", product.Type)
+			}
 		}
 
-		wg.Wait()
 		var (
 			count     int
 			totalSize int64
@@ -159,7 +157,81 @@ func main() {
 	}()
 
 	<-done
-	log.Println("ByeBye")
+	log.Println("\nByeBye")
+}
+
+func all(ptype api.PType) (api.ProductList, error) {
+	var products api.ProductList
+	skus, err := api.Skus(ptype)
+	if err != nil {
+		return nil, err
+	}
+	var chunks [][]string
+	var start, end int = 0, 10
+	var hasMore bool = true
+	for hasMore {
+		if len(skus.Data.List) <= end {
+			end = len(skus.Data.List)
+			hasMore = false
+		}
+		datas := skus.Data.List[start:end]
+		var ids []string
+		for _, data := range datas {
+			ids = append(ids, strconv.Itoa(data.ColumnSku))
+		}
+		chunks = append(chunks, ids)
+		if hasMore {
+			start += 10
+			end += 10
+		}
+	}
+	for _, chunk := range chunks {
+		infos, err := api.Infos(chunk)
+		if err != nil {
+			return nil, err
+		}
+		for _, article := range infos.Data.Infos {
+			products = append(products, api.Product{
+				ID:       article.ID,
+				Type:     article.Type,
+				Title:    article.Title,
+				Subtitle: article.Subtitle,
+				Author: struct {
+					Name      string `json:"name"`
+					Intro     string `json:"intro"`
+					Info      string `json:"info"`
+					Avatar    string `json:"avatar"`
+					BriefHTML string `json:"brief_html"`
+					Brief     string `json:"brief"`
+				}{
+					Name: article.Author.Name,
+				},
+				Article: struct {
+					ID                int    `json:"id"`
+					Count             int    `json:"count"`
+					CountReq          int    `json:"count_req"`
+					CountPub          int    `json:"count_pub"`
+					TotalLength       int    `json:"total_length"`
+					FirstArticleID    int    `json:"first_article_id"`
+					FirstArticleTitle string `json:"first_article_title"`
+				}{
+					ID:                article.Article.ID,
+					Count:             article.Article.Count,
+					CountReq:          article.Article.CountReq,
+					CountPub:          article.Article.CountPub,
+					TotalLength:       article.Article.TotalLength,
+					FirstArticleID:    article.Article.FirstArticleID,
+					FirstArticleTitle: article.Article.FirstArticleTitle,
+				},
+				Seo: struct {
+					Keywords []string `json:"keywords"`
+				}{
+					Keywords: article.Seo.Keywords,
+				},
+			})
+		}
+	}
+	return products, nil
 }
 
 func validateType() {
@@ -168,9 +240,9 @@ func validateType() {
 	}
 }
 
-func prompt(products api.ProjectResponse) []api.Product {
-	sort.Sort(products.Data.Products)
-	for index, product := range products.Data.Products {
+func prompt(products api.ProductList) []api.Product {
+	sort.Sort(products)
+	for index, product := range products {
 		var ptypename string
 		switch product.Type {
 		case api.ProductTypeZhuanlan:
@@ -194,17 +266,17 @@ ASK:
 		fmt.Printf("> ")
 		fmt.Scanln(&courseID)
 		if courseID == "" {
-			courses = products.Data.Products
+			courses = products
 			break
 		}
 		split := strings.Split(courseID, ",")
 		for _, s := range split {
 			id, err := strconv.Atoi(s)
-			if err != nil || id > len(products.Data.Products) || id < 1 {
+			if err != nil || id > len(products) || id < 1 {
 				log.Printf("非法课程 id %v !\n", s)
 				continue ASK
 			}
-			courses = append(courses, products.Data.Products[id-1])
+			courses = append(courses, products[id-1])
 		}
 		break
 	}
