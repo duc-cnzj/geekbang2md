@@ -182,7 +182,7 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 	}
 
 	wg := sync.WaitGroup{}
-	sigWaiter := waiter.NewSigWaiter(50)
+	sigWaiter := waiter.NewSigWaiter(10)
 	b := bar.NewBar(s.ArticleTitle, len(items))
 	for i := range items {
 		wg.Add(1)

@@ -26,13 +26,6 @@ func NewBar(title string, total int) *Bar {
 		progressbar.OptionEnableColorCodes(true),
 		progressbar.OptionSetWidth(60),
 		progressbar.OptionSetDescription("[Download]: "+title),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
 	)}
 }
 

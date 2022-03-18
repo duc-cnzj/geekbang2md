@@ -38,7 +38,7 @@ func (w *MDWriter) GetFileName(filename string) string {
 	return name + ".md"
 }
 
-func (w *MDWriter) FileExists(filename string) (os.FileInfo,bool) {
+func (w *MDWriter) FileExists(filename string) (os.FileInfo, bool) {
 	st, err := os.Stat(w.GetFileName(filename))
 	if err == nil && st.Size() > 0 {
 		return st, true
