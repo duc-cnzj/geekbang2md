@@ -1,6 +1,7 @@
 package video
 
 import (
+	"bufio"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -18,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/dustin/go-humanize"
 
@@ -91,22 +93,23 @@ func (v *Video) SegDownloadPath(name string) string {
 	return filepath.Join(v.baseDir, "segs", utils.FilterCharacters(name))
 }
 
-func (v *Video) DeleteSegs(segs []*Seg) error {
+func (v *Video) DeleteSegs(segs ...*Seg) error {
 	for _, seg := range segs {
-		os.Remove(seg.path)
+		if err := os.Remove(seg.path); err != nil {
+			log.Printf("remove '%s', err: %v", seg.path, err)
+		}
 	}
 	return nil
 }
 
 func (v *Video) Download() error {
+	utils.WriteReadmeMD(v.baseDir, v.title, v.author, v.count, v.keywords)
 	articles, err := api.Articles(v.cid)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
-
 	for i := range articles.Data.List {
-		func() {
+		func(num int) {
 			s := articles.Data.List[i]
 			article, err := api.Article(strconv.Itoa(s.ID))
 			if err != nil {
@@ -116,12 +119,28 @@ func (v *Video) Download() error {
 			marshal, _ := json.Marshal(article.Data.HlsVideos)
 			var vi api.Video
 			json.Unmarshal(marshal, &vi)
-			//log.Printf("开始下载: %s", s.ArticleTitle)
-			err = download(v.DownloadPath(s.ArticleTitle+".ts"), vi.Hd.URL, v, s)
-			if err != nil {
-				log.Printf("下载出错: %v\n", err)
+			if vi.Hd.URL == "" {
+				api.DeleteArticleCache(strconv.Itoa(s.ID))
+				log.Printf("[ERROR]: 视频: '%s', 下载地址为空！ \n", s.ArticleTitle)
+				return
 			}
-		}()
+			var pad int = 2
+			if v.count > 100 {
+				pad = 3
+			}
+			title := utils.GetTitle(s.ArticleTitle, num, pad)
+			for i := 0; i < 3; i++ {
+				err = download(v.DownloadPath(title+".ts"), vi.Hd.URL, v, title, strconv.Itoa(s.ID))
+				if !errors.Is(err, ErrorRetry) {
+					break
+				}
+				log.Printf("\n[Warning]: 下载出错, 重新下载: '%s', %v\n", title, err)
+				time.Sleep(500 * time.Millisecond)
+			}
+			if err != nil {
+				log.Printf("\n下载出错: %v\n", err)
+			}
+		}(i)
 	}
 	p := v.DownloadPath("segs")
 	var count int
@@ -141,38 +160,34 @@ func (v *Video) Download() error {
 	return nil
 }
 
-func download(path string, u string, v *Video, s *api.ArticlesResponseItem) error {
+var ErrorRetry = errors.New("retry")
+
+func download(downloadPath string, hdUrl string, v *Video, title string, id string) error {
 	var err error
-	stat, err := os.Stat(path)
+	stat, err := os.Stat(downloadPath)
 	if err == nil && stat.Size() > 0 {
 		return nil
 	}
-	get, err := api.NewBackoffClient(3).Get(u)
+
+	parse, err := url.Parse(hdUrl)
 	if err != nil {
-		log.Fatalln(err)
+		return err
+	}
+
+	get, err := api.NewBackoffClient(3).Get(hdUrl)
+	if err != nil {
+		return err
 	}
 	defer get.Body.Close()
-	keyAll, err := io.ReadAll(get.Body)
+	m3u8, err := io.ReadAll(get.Body)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
-	submatch := uregex.FindStringSubmatch(string(keyAll))
-	key, _ := api.VideoKey(submatch[1], strconv.Itoa(s.ID))
 
-	parse, _ := url.Parse(u)
 	baseUrl := fmt.Sprintf("https://%s/%s/", parse.Host, strings.Split(parse.Path, "/")[1])
-	res, err := api.NewBackoffClient(3).Get(u)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	all, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
 	os.MkdirAll(v.DownloadPath("segs"), 0755)
 	var items Segs
-	stringSubmatch := tsFileRegexp.FindAllStringSubmatch(string(all), -1)
+	stringSubmatch := tsFileRegexp.FindAllStringSubmatch(string(m3u8), -1)
 	for _, s := range stringSubmatch {
 		id, _ := strconv.Atoi(s[1])
 		items = append(items, &Seg{
@@ -184,13 +199,13 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 
 	wg := sync.WaitGroup{}
 	sigWaiter := waiter.NewSigWaiter(constant.VideoDownloadParallelNum)
-	var b bar.Interface = bar.NewBar(s.ArticleTitle, len(items))
+	var b bar.Interface = bar.NewBar(title, len(items))
 	for i := range items {
 		wg.Add(1)
+		sigWaiter.Wait(context.TODO())
 		go func(s *Seg) {
 			defer wg.Done()
 			defer b.Add()
-			sigWaiter.Wait(context.TODO())
 			defer sigWaiter.Release()
 			st, err := os.Stat(s.path)
 			if err == nil && st.Size() > 0 {
@@ -202,24 +217,34 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 				return
 			}
 			defer get.Body.Close()
-			readAll, _ := io.ReadAll(get.Body)
-			if len(readAll) > 0 {
-				//log.Printf("[WRITE]: %s\n", s.path)
-				if err := os.WriteFile(s.path, readAll, 0644); err != nil {
-					log.Fatalln(err)
+			if get.ContentLength > 0 {
+				file, err := os.OpenFile(s.path, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
+				if err != nil {
+					return
 				}
+				defer file.Close()
+				io.Copy(file, bufio.NewReaderSize(get.Body, 1024*1024*10))
 			}
 		}(items[i])
 	}
 
 	wg.Wait()
-	f, err := os.OpenFile(path, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
+	sort.Sort(items)
+	submatch := uregex.FindStringSubmatch(string(m3u8))
+	key, err := api.VideoKey(submatch[1], id)
+	if err != nil {
+		return err
+	}
+	if len(key) == 0 {
+		api.DeleteArticleCache(id)
+		return fmt.Errorf("%w, 当前获取不到解码的 key 值，建议全部下载完成之后再重试。", ErrorRetry)
+	}
+
+	f, err := os.OpenFile(downloadPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	sort.Sort(items)
-
 	for _, item := range items {
 		file, err := os.ReadFile(item.path)
 		if err != nil {
@@ -227,9 +252,10 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 		}
 		aes128, err := decryptAES128(file, key, make([]byte, 16))
 		if err != nil {
-			v.DeleteSegs(items)
-			log.Printf("[ERROR]: 解码失败: %v\n", err)
-			return err
+			v.DeleteSegs(items...)
+			f.Close()
+			os.Remove(downloadPath)
+			return fmt.Errorf("[%w]: reason: '%s' path: '%s'", ErrorRetry, err.Error(), item.path)
 		}
 		for j := 0; j < len(aes128); j++ {
 			if aes128[j] == syncByte {
@@ -237,13 +263,14 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 				break
 			}
 		}
+
 		if _, err := f.Write(aes128); err != nil {
 			return err
 		}
 	}
-	v.DeleteSegs(items)
+	v.DeleteSegs(items...)
 	info, _ := f.Stat()
-	log.Printf("\n[SUCCESS]: 下载成功 '%s', 大小: '%s'", s.ArticleTitle, humanize.Bytes(uint64(info.Size())))
+	log.Printf("\n[SUCCESS]: 下载成功 '%s', 大小: '%s'", title, humanize.Bytes(uint64(info.Size())))
 	return nil
 }
 
@@ -256,14 +283,14 @@ func decryptAES128(crypted, key, iv []byte) (origData []byte, err error) {
 		e := recover()
 		switch edata := e.(type) {
 		case string:
-			err = errors.New(edata)
+			err = errors.New(fmt.Sprintf("%s, len key: %d", edata, len(key)))
 		case error:
-			err = edata
+			err = fmt.Errorf("%w: key len: %d", edata, len(key))
 		}
 	}()
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: key len: %d", err, len(key))
 	}
 	blockSize := block.BlockSize()
 	blockMode := cipher.NewCBCDecrypter(block, iv[:blockSize])

@@ -8,7 +8,7 @@ import (
 
 var (
 	// VideoDownloadParallelNum 视频 `segments` 并发下载数量
-	VideoDownloadParallelNum int64 = 10
+	VideoDownloadParallelNum int64 = 20
 	// ImageDownloadParallelNum 图片并发下载数量
 	ImageDownloadParallelNum int64 = 30
 

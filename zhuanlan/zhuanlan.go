@@ -1,14 +1,11 @@
 package zhuanlan
 
 import (
-	"bytes"
 	"fmt"
-	"html/template"
 	"log"
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/dustin/go-humanize"
@@ -44,28 +41,10 @@ func NewZhuanLan(title string, id int, author string, count int, keywords []stri
 	return &ZhuanLan{audio: audio, title: title, id: id, author: author, count: count, keywords: keywords, imageManager: imageManager, mdWriter: mdWriter}
 }
 
-var rd, _ = template.New("").Parse(`
-# {{ .Title }}
-
-> 作者: {{ .Author }}
->
-> 总数: {{ .Count }}
-
-关键字: {{ .Keywords }}。
-`)
-
 func (zl *ZhuanLan) Download() error {
-	bf := bytes.Buffer{}
-	rd.Execute(&bf, map[string]interface{}{
-		"Title":    zl.title,
-		"Author":   zl.author,
-		"Count":    zl.count,
-		"Keywords": strings.Join(zl.keywords, ", "),
-	})
-	zl.mdWriter.WriteReadmeMD(bf.String())
+	utils.WriteReadmeMD(zl.mdWriter.baseDir, zl.title, zl.author, zl.count, zl.keywords)
 	articles, err := api.Articles(zl.id)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	var pad int = 2
@@ -78,7 +57,7 @@ func (zl *ZhuanLan) Download() error {
 		wg.Add(1)
 		go func(s *api.ArticlesResponseItem, i int) {
 			defer wg.Done()
-			t := getTitle(s, i, pad)
+			t := utils.GetTitle(s.ArticleTitle, i, pad)
 			if info, exists := zl.mdWriter.FileExists(t); exists {
 				log.Printf("[SKIP]: %s -> %s (大小: %s)\n", zl.title, filepath.Base(info.Name()), humanize.Bytes(uint64(info.Size())))
 				return

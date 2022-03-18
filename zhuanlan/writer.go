@@ -16,7 +16,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-var imgRegexp = regexp.MustCompile(`!\[(.*?)]\((.*)\)`)
+var imgRegexp = regexp.MustCompile(`!\[(.*?)]\((.*?)\)`)
 
 type MDWriter struct {
 	title        string
@@ -47,18 +47,6 @@ func (w *MDWriter) FileExists(filename string) (os.FileInfo, bool) {
 		return nil, false
 	}
 	return nil, false
-}
-
-func (w *MDWriter) WriteReadmeMD(content string) error {
-	file, err := os.OpenFile(w.GetFileName("README.md"), os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	if _, err := file.Write([]byte(content)); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime, title string, html string) error {

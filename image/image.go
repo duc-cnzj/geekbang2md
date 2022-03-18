@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -36,7 +37,10 @@ func (m *Manager) Download(u string) (string, error) {
 	if path := m.Get(u); path != "" {
 		return path, nil
 	}
-	parse, _ := url.Parse(u)
+	parse, err := url.Parse(u)
+	if err != nil {
+		return "", fmt.Errorf("%w path: %s", err, u)
+	}
 	split := strings.Split(parse.Path, "/")
 	name := split[len(split)-1]
 	var p string
@@ -60,7 +64,7 @@ func (m *Manager) Download(u string) (string, error) {
 	defer res.Body.Close()
 	all, _ := io.ReadAll(res.Body)
 	if err := os.WriteFile(p, all, 0644); err != nil {
-		return "", err
+		return "", fmt.Errorf("err: %w, origin path: %s, write path: %s", err, u, p)
 	}
 	m.Add(u, p)
 	return p, nil

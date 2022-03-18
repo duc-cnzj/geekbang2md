@@ -20,6 +20,10 @@ func Dir() string {
 	return dir
 }
 
+func (c *Cache) Delete(key string) error {
+	return os.Remove(c.cachePath(key))
+}
+
 func (c *Cache) Get(key string) ([]byte, error) {
 	file, err := os.ReadFile(c.cachePath(key))
 	if err != nil {

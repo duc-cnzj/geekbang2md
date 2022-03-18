@@ -848,7 +848,7 @@ func Skus(p PType) (*SkusResponse, error) {
 	case ProductTypeZhuanlan:
 		tp = 1
 	}
-	cacheKey := "skus"
+	cacheKey := fmt.Sprintf("skus-%d", tp)
 	file, err := c.Get(cacheKey)
 	if err == nil && len(file) > 0 {
 		err = json.NewDecoder(bytes.NewReader(file)).Decode(&result)
@@ -1049,6 +1049,14 @@ type ArticleResponse struct {
 	Code int `json:"code"`
 }
 
+func DeleteCache(key string) {
+	c.Delete(key)
+}
+
+func DeleteArticleCache(id string) {
+	DeleteCache("article-" + id)
+}
+
 // Article 获取cid
 func Article(id string) (ArticleResponse, error) {
 	var result ArticleResponse
@@ -1206,8 +1214,11 @@ func VideoKey(u string, vid string) ([]byte, error) {
 	}
 	defer get.Body.Close()
 	all, _ := io.ReadAll(get.Body)
-	if len(all) > 0 {
+	if get.ContentLength > 0 {
 		c.SetOrigin(cacheKey, all)
+	}
+	if get.StatusCode != 200 {
+		log.Printf("video key response code != 200, data: '%s', code: %d\n", string(all), get.StatusCode)
 	}
 	return all, nil
 }
