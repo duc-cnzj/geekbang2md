@@ -184,7 +184,7 @@ func download(path string, u string, v *Video, s *api.ArticlesResponseItem) erro
 
 	wg := sync.WaitGroup{}
 	sigWaiter := waiter.NewSigWaiter(constant.VideoDownloadParallelNum)
-	b := bar.NewBar(s.ArticleTitle, len(items))
+	var b bar.Interface = bar.NewBar(s.ArticleTitle, len(items))
 	for i := range items {
 		wg.Add(1)
 		go func(s *Seg) {
