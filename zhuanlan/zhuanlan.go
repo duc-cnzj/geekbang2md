@@ -79,7 +79,7 @@ func (zl *ZhuanLan) Download() error {
 			defer wg.Done()
 			t := getTitle(s, i, pad)
 			if info, exists := zl.mdWriter.FileExists(t); exists {
-				log.Printf("[Skip Alreaay Exists]: %s -> %s (大小: %s)\n", zl.title, filepath.Base(info.Name()), humanize.Bytes(uint64(info.Size())))
+				log.Printf("[SKIP]: %s -> %s (大小: %s)\n", zl.title, filepath.Base(info.Name()), humanize.Bytes(uint64(info.Size())))
 				return
 			}
 			response, err := api.Article(strconv.Itoa(s.ID))
