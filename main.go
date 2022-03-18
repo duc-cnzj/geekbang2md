@@ -35,7 +35,7 @@ var (
 func init() {
 	log.SetFlags(0)
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
-	flag.BoolVar(&hack, "hack", false, "-hack 获取全部视频，不管你有没有")
+	flag.BoolVar(&hack, "hack", false, "-hack 获取全部课程，不管你有没有")
 	flag.BoolVar(&noaudio, "noaudio", true, "-noaudio 不下载音频")
 	flag.StringVar(&dir, "dir", constant.TempDir, fmt.Sprintf("-dir /tmp 下载目录, 默认使用临时目录: '%s'", constant.TempDir))
 	flag.StringVar(&downloadType, "type", "", "-type zhuanlan/video 下载类型，不指定则默认全部类型")

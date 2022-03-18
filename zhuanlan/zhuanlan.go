@@ -78,8 +78,8 @@ func (zl *ZhuanLan) Download() error {
 		go func(s *api.ArticlesResponseItem, i int) {
 			defer wg.Done()
 			t := getTitle(s, i, pad)
-			if zl.mdWriter.FileExists(t) {
-				//log.Println("[SKIP]: ", s.ArticleTitle)
+			if info, exists := zl.mdWriter.FileExists(t); exists {
+				log.Printf("[Skip Alreaay Exists]: %s -> %s (大小: %s)\n", zl.title, filepath.Base(info.Name()), humanize.Bytes(uint64(info.Size())))
 				return
 			}
 			response, err := api.Article(strconv.Itoa(s.ID))

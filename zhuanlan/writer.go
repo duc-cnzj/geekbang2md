@@ -38,15 +38,15 @@ func (w *MDWriter) GetFileName(filename string) string {
 	return name + ".md"
 }
 
-func (w *MDWriter) FileExists(filename string) bool {
+func (w *MDWriter) FileExists(filename string) (os.FileInfo,bool) {
 	st, err := os.Stat(w.GetFileName(filename))
 	if err == nil && st.Size() > 0 {
-		return true
+		return st, true
 	}
 	if os.IsNotExist(err) {
-		return false
+		return nil, false
 	}
-	return false
+	return nil, false
 }
 
 func (w *MDWriter) WriteReadmeMD(content string) error {
