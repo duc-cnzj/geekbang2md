@@ -18,13 +18,13 @@ type Bar struct {
 
 func NewBar(title string, total int) *Bar {
 	runes := []rune(title)
-	if len(runes) > 30 {
-		runes = append(runes[0:27], []rune("...")...)
+	if len(runes) > 20 {
+		runes = append(runes[0:17], []rune("...")...)
 	}
 	b := &Bar{title: title, total: total + 1, b: progressbar.NewOptions(total,
 		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetWidth(60),
-		progressbar.OptionSetDescription(fmt.Sprintf("[Download]: %-30s", string(runes))),
+		progressbar.OptionSetWidth(50),
+		progressbar.OptionSetDescription(fmt.Sprintf("[Download]: %-20s", string(runes))),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",

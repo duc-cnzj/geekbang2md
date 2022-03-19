@@ -143,19 +143,21 @@ func (v *Video) Download() error {
 		}(i)
 	}
 	p := v.DownloadPath("segs")
-	var count int
-	filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			log.Println(err)
-			return err
+	if _, err := os.Stat(p); err == nil {
+		var count int
+		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+			if d.Type().IsRegular() && strings.HasSuffix(path, ".ts") {
+				count++
+			}
+			return nil
+		})
+		if count == 0 {
+			os.RemoveAll(p)
 		}
-		if d.Type().IsRegular() && strings.HasSuffix(path, ".ts") {
-			count++
-		}
-		return nil
-	})
-	if count == 0 {
-		os.RemoveAll(p)
 	}
 	return nil
 }
