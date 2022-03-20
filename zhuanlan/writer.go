@@ -9,11 +9,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DuC-cnZj/geekbang2md/image"
-	"github.com/DuC-cnZj/geekbang2md/utils"
+	"github.com/duc-cnzj/geekbang2md/image"
+	"github.com/duc-cnzj/geekbang2md/utils"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/dustin/go-humanize"
 )
 
 var imgRegexp = regexp.MustCompile(`!\[(.*?)]\((.*?)\)`)
@@ -38,22 +37,23 @@ func (w *MDWriter) GetFileName(filename string) string {
 	return name + ".md"
 }
 
-func (w *MDWriter) FileExists(filename string) (os.FileInfo, bool) {
-	st, err := os.Stat(w.GetFileName(filename))
+func (w *MDWriter) FileExists(filename string) (os.FileInfo, string, bool) {
+	p := w.GetFileName(filename)
+	st, err := os.Stat(p)
 	if err == nil && st.Size() > 0 {
-		return st, true
+		return st, p, true
 	}
 	if os.IsNotExist(err) {
-		return nil, false
+		return nil, p, false
 	}
-	return nil, false
+	return nil, p, false
 }
 
-func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime, title string, html string) error {
+func (w *MDWriter) WriteFile(articleNumber, audioDownloadURL, audioDubber, audioSize, audioTime, title string, html string) (string, error) {
 	converter := md.NewConverter("", true, nil)
 	markdown, err := converter.ConvertString(html)
 	if err != nil {
-		return err
+		return "", err
 	}
 	var ss = &SafeString{s: markdown}
 	//拿出图片，抓图片
@@ -70,7 +70,7 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 			if s == "" {
 				return
 			}
-			download, err := w.imageManager.Download(s)
+			download, err := w.imageManager.Download(s, articleNumber)
 			if err != nil {
 				log.Println(err)
 			} else {
@@ -100,14 +100,13 @@ func (w *MDWriter) WriteFile(audioDownloadURL, audioDubber, audioSize, audioTime
 	ss.Set(mdheader + mdAudio + ss.Get())
 	file, err := os.OpenFile(w.GetFileName(title), os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 	if _, err := file.Write([]byte(ss.Get())); err != nil {
-		return err
+		return "", err
 	}
-	log.Printf("[WRITE]: %s -> %s (大小: %s)\n", w.title, filepath.Base(w.GetFileName(title)), humanize.Bytes(uint64(len(ss.Get()))))
-	return nil
+	return fmt.Sprintf("[WRITE]: %s (大小: %s)", filepath.Base(w.GetFileName(title)), utils.Bytes(uint64(len(ss.Get())))), nil
 }
 
 type SafeString struct {

@@ -15,10 +15,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DuC-cnZj/geekbang2md/constant"
-	"github.com/DuC-cnZj/geekbang2md/utils"
+	"github.com/cenkalti/backoff/v4"
 
-	"github.com/DuC-cnZj/geekbang2md/waiter"
+	"github.com/duc-cnzj/geekbang2md/constant"
+	"github.com/duc-cnzj/geekbang2md/utils"
+	"github.com/duc-cnzj/geekbang2md/waiter"
 )
 
 var sf utils.Group
@@ -94,11 +95,14 @@ func (c *client) Post(url string, data interface{}, direct bool) (resp *http.Res
 	c.addHeaders(r)
 
 	var do *http.Response
-	if direct {
-		do, err = c.c.Do(r)
-	} else {
-		do, err = c.Do(r)
-	}
+	backoff.Retry(func() (e error) {
+		if direct {
+			do, err = c.c.Do(r)
+		} else {
+			do, err = c.Do(r)
+		}
+		return err
+	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(3*time.Second), 3))
 	if err != nil {
 		return nil, err
 	}
@@ -132,16 +136,7 @@ func (c *client) Post(url string, data interface{}, direct bool) (resp *http.Res
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	c.rt.Wait(context.TODO())
 	defer c.rt.Release()
-	//log.Println("called: ", req.URL)
-	var res *http.Response
-	var err error
-	//log.Printf("call: %s", req.URL)
-	res, err = c.c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, err
+	return c.c.Do(req)
 }
 
 func (c *client) Login(cellphone, password string) (*AuthInfo, error) {
@@ -271,7 +266,6 @@ type GKError struct {
 func (c *client) addHeaders(r *http.Request) {
 	r.Header.Add("Accept-Encoding", "gzip")
 	r.Header.Add("Accept", "application/json, text/plain, */*")
-	r.Header.Add("Accept-Encoding", "gzip, deflate, br")
 	r.Header.Add("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
 	r.Header.Add("Connection", "keep-alive")
 	r.Header.Add("Content-Type", "application/json")
@@ -307,7 +301,7 @@ func (c *client) handleError(do *http.Response, direct bool) (*http.Response, er
 			}
 			c.rt.Restart()
 		}
-		return nil, errors.New("geekbang 451: 请求太频繁了，再等等吧，程序虽然能继续运行，但还是建议你过会儿再抓")
+		return nil, errors.New("geekbang 451: 请求太频繁了，程序虽然能继续运行，但还是建议你过会儿再下载")
 	}
 	if do.StatusCode > 400 {
 		defer do.Body.Close()

@@ -26,9 +26,8 @@ func (b *BackoffClient) Get(u string) (*http.Response, error) {
 		resp, e = b.c.Get(u)
 		if e != nil {
 			log.Printf("http '%s' err: '%v'  , retry...\n", u, e)
-			return e
 		}
-		return nil
+		return e
 	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(3*time.Second), b.RetryTimes)); err != nil {
 		return nil, err
 	}

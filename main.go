@@ -14,14 +14,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dustin/go-humanize"
-
-	"github.com/DuC-cnZj/geekbang2md/api"
-	"github.com/DuC-cnZj/geekbang2md/cache"
-	"github.com/DuC-cnZj/geekbang2md/constant"
-	"github.com/DuC-cnZj/geekbang2md/utils"
-	"github.com/DuC-cnZj/geekbang2md/video"
-	"github.com/DuC-cnZj/geekbang2md/zhuanlan"
+	"github.com/duc-cnzj/geekbang2md/api"
+	"github.com/duc-cnzj/geekbang2md/cache"
+	"github.com/duc-cnzj/geekbang2md/constant"
+	"github.com/duc-cnzj/geekbang2md/notice"
+	"github.com/duc-cnzj/geekbang2md/utils"
+	"github.com/duc-cnzj/geekbang2md/video"
+	"github.com/duc-cnzj/geekbang2md/zhuanlan"
 )
 
 var (
@@ -30,10 +29,15 @@ var (
 	downloadType string
 	audio        bool
 	hack         bool
+
+	password string
+	username string
 )
 
 func init() {
 	log.SetFlags(0)
+	flag.StringVar(&username, "u", "", "-u xxxx 用户名")
+	flag.StringVar(&password, "p", "", "-p xxxx 密码")
 	flag.StringVar(&cookie, "cookie", "", "-cookie xxxx")
 	flag.BoolVar(&hack, "hack", false, "-hack 获取全部课程，不管你有没有")
 	flag.BoolVar(&audio, "audio", false, "-audio 下载音频")
@@ -53,7 +57,6 @@ func main() {
 	done := systemSignal()
 	go func() {
 		var err error
-		var phone, password string
 
 		if cookie != "" {
 			api.HttpClient.SetHeaders(map[string]string{"Cookie": cookie})
@@ -67,14 +70,17 @@ func main() {
 				log.Fatalln(err)
 			}
 		} else {
-			if phone == "" || password == "" {
+			if username == "" {
 				fmt.Printf("用户名: ")
-				fmt.Scanln(&phone)
+				fmt.Scanln(&username)
+				api.HttpClient.SetPhone(username)
+			}
+			if password == "" {
 				password = utils.ReadPassword("密码: ")
 				api.HttpClient.SetPassword(password)
-				api.HttpClient.SetPhone(phone)
 			}
-			if u, err := api.HttpClient.Login(phone, password); err != nil {
+
+			if u, err := api.HttpClient.Login(username, password); err != nil {
 				log.Fatalln(err)
 			} else {
 				log.Printf("############ %s ############", u.Data.Nick)
@@ -92,9 +98,6 @@ func main() {
 
 		if hack {
 			products, err = all(ptype)
-			if err != nil {
-				log.Fatalln(err)
-			}
 		} else {
 			products, err = api.AllProducts(ptype)
 		}
@@ -107,9 +110,9 @@ func main() {
 		for i := range courses {
 			func() {
 				var product = &courses[i]
-				log.Printf("[%d] 开始下载: <%s>\n", i, product.Title)
+				log.Printf("[%d] 开始下载: <%s>, 总共 %d 课时\n", i+1, product.Title, product.Article.Count)
 				defer func(t time.Time) {
-					log.Printf("🍙 [%d] <%s> 下载完成，耗时: %s\n\n", i, product.Title, time.Since(t))
+					log.Printf("🍙 [%d] <%s> 下载完成，耗时: %s\n\n", i+1, product.Title, time.Since(t))
 				}(time.Now())
 
 				var err error
@@ -152,15 +155,16 @@ func main() {
 					cacheSize += info.Size()
 				}
 				if info.Size() < 10 {
-					log.Printf("%s 文件为空\n", path)
+					notice.Warning(fmt.Sprintf("%s 文件为空", path))
 				}
 				totalSize += info.Size()
 			}
 			return nil
 		})
+		notice.ShowWarnings()
 		log.Printf("共计 %d 个文件\n", count)
-		log.Printf("🍓 markdown 目录位于: %s, 大小是 %s\n", dir, humanize.Bytes(uint64(totalSize)))
-		log.Printf("🥡 缓存目录, 请手动删除: %s, 大小是 %s\n", cache.Dir(), humanize.Bytes(uint64(cacheSize)))
+		log.Printf("🍓 markdown 目录位于: %s, 大小是 %s\n", dir, utils.Bytes(uint64(totalSize)))
+		log.Printf("🥡 缓存目录, 请手动删除: %s, 大小是 %s\n", cache.Dir(), utils.Bytes(uint64(cacheSize)))
 		log.Println("🥭 END")
 		done <- struct{}{}
 	}()
@@ -297,10 +301,8 @@ func systemSignal() chan struct{} {
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	done := make(chan struct{}, 1)
 	go func() {
-		select {
-		case <-ch:
-			done <- struct{}{}
-		}
+		<-ch
+		done <- struct{}{}
 	}()
 	return done
 }

@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DuC-cnZj/geekbang2md/cache"
+	"github.com/duc-cnzj/geekbang2md/cache"
 )
 
 var c = &cache.Cache{}
@@ -1166,6 +1166,11 @@ type ArticlesResponse struct {
 		} `json:"page"`
 	} `json:"data"`
 	Code int `json:"code"`
+}
+
+func DeleteArticlesCache(cid int) {
+	key := fmt.Sprintf("articles-%d", cid)
+	DeleteCache(key)
 }
 
 func Articles(cid int) (ArticlesResponse, error) {

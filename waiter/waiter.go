@@ -2,7 +2,6 @@ package waiter
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	"golang.org/x/time/rate"
@@ -40,8 +39,6 @@ func (w *Waiter) Stw() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.count++
-	//w.cond.Broadcast()
-	log.Println("[Stop the world]!")
 }
 
 func (w *Waiter) Restart() {
@@ -49,7 +46,6 @@ func (w *Waiter) Restart() {
 	defer w.mu.Unlock()
 	w.count--
 	w.cond.Broadcast()
-	log.Println("[Restart the world]!: ", w.count)
 }
 
 func (w *Waiter) Wait(ctx context.Context) {
@@ -60,7 +56,6 @@ func (w *Waiter) Wait(ctx context.Context) {
 		w.mu.Lock()
 		defer w.mu.Unlock()
 		for w.count != 0 {
-			log.Println("wait")
 			w.cond.Wait()
 			rewait = true
 		}

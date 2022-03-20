@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DuC-cnZj/geekbang2md/constant"
-	"github.com/DuC-cnZj/geekbang2md/waiter"
+	"github.com/duc-cnzj/geekbang2md/constant"
+	"github.com/duc-cnzj/geekbang2md/waiter"
 )
 
 type Manager struct {
@@ -33,24 +33,16 @@ func NewManager(baseDir string) *Manager {
 	}
 }
 
-func (m *Manager) Download(u string) (string, error) {
+func (m *Manager) Download(u string, articleNumber string) (string, error) {
 	if path := m.Get(u); path != "" {
 		return path, nil
 	}
-	parse, err := url.Parse(u)
+	p, err := m.FullLocalPath(u, articleNumber)
 	if err != nil {
-		return "", fmt.Errorf("%w path: %s", err, u)
-	}
-	split := strings.Split(parse.Path, "/")
-	name := split[len(split)-1]
-	var p string
-	if strings.HasSuffix(name, ".mp3") {
-		p = filepath.Join(m.baseDir, "mp3", name)
-	} else {
-		p = filepath.Join(m.baseDir, name)
+		return "", err
 	}
 	stat, err := os.Stat(p)
-	if err == nil && stat.Mode().IsRegular() {
+	if err == nil && stat.Mode().IsRegular() && stat.Size() > 10 {
 		m.Add(u, p)
 		return p, nil
 	}
@@ -67,6 +59,26 @@ func (m *Manager) Download(u string) (string, error) {
 		return "", fmt.Errorf("err: %w, origin path: %s, write path: %s", err, u, p)
 	}
 	m.Add(u, p)
+	return p, nil
+}
+
+func (m *Manager) FullLocalPath(u string, articleNumber string) (string, error) {
+	parse, err := url.Parse(u)
+	if err != nil {
+		return "", fmt.Errorf("%w path: %s", err, u)
+	}
+	split := strings.Split(parse.Path, "/")
+	name := split[len(split)-1]
+
+	var p string
+	if strings.HasSuffix(name, ".mp3") {
+		if !strings.HasPrefix(name, articleNumber+"-") {
+			name = fmt.Sprintf("%s-%s", articleNumber, name)
+		}
+		p = filepath.Join(m.baseDir, "mp3", name)
+	} else {
+		p = filepath.Join(m.baseDir, name)
+	}
 	return p, nil
 }
 

@@ -11,10 +11,17 @@ import (
 )
 
 var regexpTitle = regexp.MustCompile(`^(\s*(\d+)\s*|第\d+讲\s)`)
+var regexpSpace = regexp.MustCompile(`(\s+)`)
 
 func GetTitle(in string, i int, pad int) string {
-	title := regexpTitle.ReplaceAllString(in, "")
-	return fmt.Sprintf("%0*d %s", pad, i+1, title)
+	return fmt.Sprintf("%s %s", GetArticleNumber(i, pad), regexpSpace.ReplaceAllString(
+		FilterCharacters(regexpTitle.ReplaceAllString(in, "")),
+		" "),
+	)
+}
+
+func GetArticleNumber(i int, pad int) string {
+	return fmt.Sprintf("%0*d", pad, i+1)
 }
 
 var rd, _ = template.New("").Parse(`

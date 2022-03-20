@@ -1,15 +1,15 @@
-# 极客时间 专栏 + 视频 爬虫
+# 极客时间 专栏 + 视频 下载工具
 
 > 仅供学习交流，请勿商用
 > 
 > 随便写写，能用就行
 
-因为该死的速率限制，爬虫比较慢，大概 5s/次 请求，不会被限流
+因为该死的速率限制，下载比较慢，大概 5s/次 请求，不会被限流
 
 
 ## 下载
 
-download from [release](https://github.com/DuC-cnZj/geekbang2md/releases)
+download from [release](https://github.com/duc-cnzj/geekbang2md/releases)
 
 ```shell
 chmod +x geekbang2md
@@ -18,7 +18,7 @@ chmod +x geekbang2md
 or
 
 ```shell
-go install github.com/DuC-cnZj/geekbang2md@latest
+go install github.com/duc-cnzj/geekbang2md@latest
 ```
 
 ## 使用

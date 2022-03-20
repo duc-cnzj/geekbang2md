@@ -21,13 +21,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dustin/go-humanize"
-
-	"github.com/DuC-cnZj/geekbang2md/api"
-	"github.com/DuC-cnZj/geekbang2md/bar"
-	"github.com/DuC-cnZj/geekbang2md/constant"
-	"github.com/DuC-cnZj/geekbang2md/utils"
-	"github.com/DuC-cnZj/geekbang2md/waiter"
+	"github.com/duc-cnzj/geekbang2md/api"
+	"github.com/duc-cnzj/geekbang2md/bar"
+	"github.com/duc-cnzj/geekbang2md/constant"
+	"github.com/duc-cnzj/geekbang2md/notice"
+	"github.com/duc-cnzj/geekbang2md/utils"
+	"github.com/duc-cnzj/geekbang2md/waiter"
 )
 
 type Video struct {
@@ -108,33 +107,34 @@ func (v *Video) Download() error {
 	if err != nil {
 		return err
 	}
+	currentCount := len(articles.Data.List)
 	for i := range articles.Data.List {
 		func(num int) {
 			s := articles.Data.List[i]
-			article, err := api.Article(strconv.Itoa(s.ID))
-			if err != nil {
-				log.Printf("[Download]: article: %s err: %v \n", s.ArticleTitle, err)
-				return
-			}
-			marshal, _ := json.Marshal(article.Data.HlsVideos)
-			var vi api.Video
-			json.Unmarshal(marshal, &vi)
-			if vi.Hd.URL == "" {
-				api.DeleteArticleCache(strconv.Itoa(s.ID))
-				log.Printf("[ERROR]: 视频: '%s', 下载地址为空！ \n", s.ArticleTitle)
-				return
-			}
 			var pad int = 2
 			if v.count > 100 {
 				pad = 3
 			}
 			title := utils.GetTitle(s.ArticleTitle, num, pad)
+
 			for i := 0; i < 3; i++ {
+				article, err := api.Article(strconv.Itoa(s.ID))
+				if err != nil {
+					log.Printf("[Download]: article: %s err: %v \n", s.ArticleTitle, err)
+					return
+				}
+				marshal, _ := json.Marshal(article.Data.HlsVideos)
+				var vi api.Video
+				json.Unmarshal(marshal, &vi)
+				if vi.Hd.URL == "" {
+					api.DeleteArticleCache(strconv.Itoa(s.ID))
+					log.Printf("[ERROR]: 视频: '%s', 下载地址为空！ \n", s.ArticleTitle)
+					return
+				}
 				err = download(v.DownloadPath(title+".ts"), vi.Hd.URL, v, title, strconv.Itoa(s.ID))
 				if !errors.Is(err, ErrorRetry) {
 					break
 				}
-				log.Printf("\n[Warning]: 下载出错, 重新下载: '%s', %v\n", title, err)
 				time.Sleep(500 * time.Millisecond)
 			}
 			if err != nil {
@@ -142,22 +142,30 @@ func (v *Video) Download() error {
 			}
 		}(i)
 	}
-	p := v.DownloadPath("segs")
-	if _, err := os.Stat(p); err == nil {
-		var count int
-		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				log.Println(err)
-				return err
-			}
-			if d.Type().IsRegular() && strings.HasSuffix(path, ".ts") {
+	var count int
+	var hasSegs bool
+	filepath.WalkDir(v.baseDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		if d.Type().IsRegular() && strings.HasSuffix(path, ".ts") {
+			if strings.HasPrefix(path, v.SegDownloadPath("")) {
+				hasSegs = true
+			} else {
 				count++
 			}
-			return nil
-		})
-		if count == 0 {
-			os.RemoveAll(p)
 		}
+		return nil
+	})
+	if count == currentCount && !hasSegs {
+		os.RemoveAll(v.DownloadPath("segs"))
+	}
+	if hasSegs || count < currentCount {
+		notice.CourseWarning(v.title, v.author, "课程未完全下载完成", "多次重试直到该警告消失", "视频")
+	}
+	if v.count > currentCount {
+		api.DeleteArticlesCache(v.cid)
 	}
 	return nil
 }
@@ -239,7 +247,7 @@ func download(downloadPath string, hdUrl string, v *Video, title string, id stri
 	}
 	if len(key) == 0 {
 		api.DeleteArticleCache(id)
-		return fmt.Errorf("%w, 当前获取不到解码的 key 值，建议全部下载完成之后再重试。", ErrorRetry)
+		return fmt.Errorf("%w, 当前获取不到解码的 key 值", ErrorRetry)
 	}
 
 	f, err := os.OpenFile(downloadPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0644)
@@ -272,7 +280,7 @@ func download(downloadPath string, hdUrl string, v *Video, title string, id stri
 	}
 	v.DeleteSegs(items...)
 	info, _ := f.Stat()
-	log.Printf("\n[SUCCESS]: 下载成功 '%s', 大小: '%s'", title, humanize.Bytes(uint64(info.Size())))
+	log.Printf("\n[SUCCESS]: 下载成功 '%s', 大小: '%s'", title, utils.Bytes(uint64(info.Size())))
 	return nil
 }
 
