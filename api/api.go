@@ -1183,7 +1183,7 @@ func Articles(cid int) (ArticlesResponse, error) {
 		}
 	}
 	res, err := HttpClient.Post("https://time.geekbang.org/serv/v1/column/articles",
-		fmt.Sprintf(`{"cid":%d,"size":100,"prev":0,"order":"earliest","sample":false}`, cid), false)
+		fmt.Sprintf(`{"cid":%d,"size":500,"prev":0,"order":"earliest","sample":false}`, cid), false)
 	if err != nil {
 		return ArticlesResponse{}, err
 	}
