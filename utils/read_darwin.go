@@ -5,13 +5,14 @@ import (
 	"os"
 	"syscall"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func ReadPassword(prompt string) string {
 	fmt.Fprint(os.Stderr, prompt)
 	var fd int
-	if terminal.IsTerminal(syscall.Stdin) {
+
+	if term.IsTerminal(syscall.Stdin) {
 		fd = syscall.Stdin
 	} else {
 		tty, err := os.Open("/dev/tty")
@@ -22,7 +23,7 @@ func ReadPassword(prompt string) string {
 		fd = int(tty.Fd())
 	}
 
-	pass, _ := terminal.ReadPassword(fd)
+	pass, _ := term.ReadPassword(fd)
 	fmt.Fprintln(os.Stderr)
 	return string(pass)
 }

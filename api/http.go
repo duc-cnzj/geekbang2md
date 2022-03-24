@@ -126,7 +126,7 @@ func (c *client) Post(url string, data interface{}, direct bool) (resp *http.Res
 	json.Unmarshal(all, &e)
 	if e != nil && e.Error.Code < 0 {
 		do.Body.Close()
-		return nil, errors.New(fmt.Sprintf("%v %d", e.Error.Msg, e.Error.Code))
+		return nil, fmt.Errorf("%v %d", e.Error.Msg, e.Error.Code)
 	}
 	do.Body = io.NopCloser(bytes.NewBuffer(all))
 
@@ -238,7 +238,7 @@ func (c *client) UserAuth(t int) (*AuthInfo, error) {
 	info := &AuthInfo{}
 	json.NewDecoder(res.Body).Decode(&info)
 	if info.Code != 0 {
-		return nil, errors.New(fmt.Sprintf("%v %d", info.Error, info.Code))
+		return nil, fmt.Errorf("%v %d", info.Error, info.Code)
 	}
 	c.SetCookies(res.Cookies())
 	return info, nil
@@ -306,7 +306,7 @@ func (c *client) handleError(do *http.Response, direct bool) (*http.Response, er
 	if do.StatusCode > 400 {
 		defer do.Body.Close()
 		all, _ := io.ReadAll(do.Body)
-		return nil, errors.New(fmt.Sprintf("%d %v", do.StatusCode, all))
+		return nil, fmt.Errorf("%d %v", do.StatusCode, all)
 	}
 	return do, nil
 }

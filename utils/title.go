@@ -47,7 +47,7 @@ func WriteReadmeMD(baseDir, title, author string, count int, keywords []string) 
 		return err
 	}
 	defer file.Close()
-	if _, err := file.Write([]byte(bf.String())); err != nil {
+	if _, err := file.Write(bf.Bytes()); err != nil {
 		return err
 	}
 	return nil

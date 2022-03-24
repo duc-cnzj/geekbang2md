@@ -293,7 +293,7 @@ func decryptAES128(crypted, key, iv []byte) (origData []byte, err error) {
 		e := recover()
 		switch edata := e.(type) {
 		case string:
-			err = errors.New(fmt.Sprintf("%s, len key: %d", edata, len(key)))
+			err = fmt.Errorf("%s, len key: %d", edata, len(key))
 		case error:
 			err = fmt.Errorf("%w: key len: %d", edata, len(key))
 		}

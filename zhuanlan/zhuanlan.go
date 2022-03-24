@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"sync"
@@ -166,11 +165,4 @@ func (zlr *ZlResults) Print() {
 	for _, result := range zlr.results {
 		log.Println(result.info)
 	}
-}
-
-var regexpTitle = regexp.MustCompile(`^(\s*(\d+)\s*|第\d+讲\s)`)
-
-func getTitle(s *api.ArticlesResponseItem, i int, pad int) string {
-	title := regexpTitle.ReplaceAllString(s.ArticleTitle, "")
-	return fmt.Sprintf("%0*d %s", pad, i+1, title)
 }
