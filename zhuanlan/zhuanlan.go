@@ -54,13 +54,10 @@ func (zl *ZhuanLan) Download() error {
 	}
 	currentCount := len(articles.Data.List)
 	b := bar.NewBar(zl.title, currentCount)
-	wg := sync.WaitGroup{}
 	r := NewZlResults()
 	for i := range articles.Data.List {
-		wg.Add(1)
-		go func(s *api.ArticlesResponseItem, i int) {
+		func(s *api.ArticlesResponseItem, i int) {
 			defer b.Add()
-			defer wg.Done()
 			t := utils.GetTitle(s.ArticleTitle, i, pad)
 			articleNumber := utils.GetArticleNumber(i, pad)
 			if !zl.audio {
@@ -112,7 +109,6 @@ func (zl *ZhuanLan) Download() error {
 		}(articles.Data.List[i], i)
 	}
 
-	wg.Wait()
 	if zl.count > currentCount {
 		api.DeleteArticlesCache(zl.id)
 	}

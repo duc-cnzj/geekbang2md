@@ -17,11 +17,12 @@ type Bar struct {
 }
 
 func NewBar(title string, total int) *Bar {
+	total += 1
 	runes := []rune(title)
 	if len(runes) > 20 {
 		runes = append(runes[0:17], []rune("...")...)
 	}
-	b := &Bar{title: title, total: total + 1, b: progressbar.NewOptions(total,
+	b := &Bar{title: title, total: total, b: progressbar.NewOptions(total,
 		progressbar.OptionEnableColorCodes(true),
 		progressbar.OptionSetWidth(20),
 		progressbar.OptionSetDescription(fmt.Sprintf("[Download]: %-20s", string(runes))),
