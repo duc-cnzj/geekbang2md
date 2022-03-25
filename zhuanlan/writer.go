@@ -93,7 +93,7 @@ func (w *MDWriter) WriteFile(articleNumber, audioDownloadURL, audioDubber, audio
   <source id="mp3" src="%s">
 </audio>
 
-`, audioDubber, audioTime, audioSize, rel)
+`, audioDubber, audioSize, audioTime, rel)
 	if w.imageManager.Get(audioDownloadURL) == "" {
 		mdAudio = ""
 	}

@@ -1,6 +1,6 @@
-.PHONY: vet
-vet:
-	go vet ./...
+.PHONY: lint
+lint:
+	golangci-lint run -D errcheck
 
 .PHONY: fmt
 fmt:
