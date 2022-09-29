@@ -180,7 +180,8 @@ func all(ptype api.PType) (api.ProductList, error) {
 		return nil, err
 	}
 	var chunks [][]string
-	var start, end int = 0, 10
+	chunkSize := 100
+	var start, end int = 0, chunkSize
 	var hasMore bool = true
 	for hasMore {
 		if len(skus.Data.List) <= end {
@@ -194,8 +195,8 @@ func all(ptype api.PType) (api.ProductList, error) {
 		}
 		chunks = append(chunks, ids)
 		if hasMore {
-			start += 10
-			end += 10
+			start += chunkSize
+			end += chunkSize
 		}
 	}
 	for _, chunk := range chunks {
