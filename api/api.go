@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/duc-cnzj/geekbang2md/cache"
+	"github.com/duc-cnzj/geekbang2md/utils"
 )
 
 var c = &cache.Cache{}
@@ -778,7 +779,7 @@ func Infos(chunks IntString) (*InfosResponse, error) {
 	var result *InfosResponse
 	sort.Sort(chunks)
 	idStr := strings.Join(chunks, ",")
-	cacheKey := "infos-" + strings.Join(chunks, "-")
+	cacheKey := "infos-" + utils.Md5(strings.Join(chunks, "-"))
 	file, err := c.Get(cacheKey)
 	if err == nil && len(file) > 0 {
 		err = json.NewDecoder(bytes.NewReader(file)).Decode(&result)
